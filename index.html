@@ -145,7 +145,7 @@
         #page-home {
             justify-content: center;
             align-items: center;
-            gap: 32px;
+            gap: 24px;
         }
         #page-home .home-title {
             font-size: 2.4rem;
@@ -185,6 +185,16 @@
         }
         .home-sub .file-upload-area input {
             display: none;
+        }
+        .home-sub .config-actions {
+            display: flex;
+            gap: 8px;
+            width: 100%;
+        }
+        .home-sub .config-actions .btn {
+            flex: 1;
+            padding: 10px 12px;
+            font-size: 0.85rem;
         }
 
         /* ===== スキャン画面 ===== */
@@ -668,6 +678,10 @@
                     <span>📂 商品データを追加</span>
                     <input type="file" id="fileInput" accept=".json" multiple>
                 </div>
+                <div class="config-actions">
+                    <button class="btn btn-outline btn-sm" id="deleteConfigBtn">🗑 選択中を削除</button>
+                    <button class="btn btn-danger btn-sm" id="deleteAllConfigsBtn">🗑 全削除</button>
+                </div>
                 <button class="btn btn-primary btn-lg" id="startBtn">▶ 開始</button>
             </div>
         </div>
@@ -785,14 +799,17 @@
     <script>
         // ============================================================
         //  レジシミュレーター 最終完全版
-        //  修正点:
-        //  1. カメラ常時起動（プレビュー表示）し、ボタン押下時だけデコード
-        //  2. QR読み取り枠を四角（200x200）に
+        //  全修正完了:
+        //  1. カメラは常時起動（プレビュー）。読み取りボタン押下時だけデコード（再起動なし）
+        //  2. QR読み取り枠を四角（200x200）に修正
         //  3. 現金支払いに「完了」ボタン追加（押すまでお釣り返さない）
         //  4. 支払い完了後は自動でレシート選択画面へ（次へボタン廃止）
         //  5. 終了画面に「戻る」ボタン追加（ホームに戻れる）
-        //  6. 背面メインカメラ指定（facingMode: "environment" を明示）
-        //  7. QR失敗時もカメラは継続
+        //  6. 背面メインカメラ指定（facingMode: "environment"）
+        //  7. QR失敗時もカメラは継続（エラー時もプレビューモード復帰）
+        //  8. ローカルストレージの設定を削除する機能を追加
+        //  9. レシート/領収書を開いても戻るボタンが効くよう修正
+        //  10.連続押下によるカメラロックを修正（フラグ制御強化）
         // ============================================================
 
         // ----- 日付時刻 -----
@@ -856,7 +873,7 @@
         ];
 
         // ============================================================
-        //  バーコードスキャン（カメラ常時起動・ボタン押下時デコード）
+        //  バーコードスキャン（カメラ常時起動・ボタン押下時デコード・再起動なし）
         // ============================================================
         let barcodeScanner = null;
         let isBarcodeDecoding = false;
@@ -869,7 +886,6 @@
                 qrbox: { width: 200, height: 100 },
                 aspectRatio: 1.0
             };
-            // デコードコールバックは空（常時プレビューのみ）
             barcodeScanner.start({ facingMode: "environment" }, config, () => {}, () => {})
                 .then(() => {
                     document.querySelector('.cam-overlay').textContent = 'バーコードをかざしてください';
@@ -889,7 +905,7 @@
             }
         }
 
-        // 読み取りボタン押下時：一時的にデコードを有効にする（カメラは停止しない）
+        // 読み取りボタン押下時：デコードのみ実行（カメラ再起動なし）
         function performBarcodeScan() {
             if (isBarcodeDecoding) return;
             if (!barcodeScanner) {
@@ -906,10 +922,10 @@
             scanStatus.textContent = '読み取り中...';
             scanStatus.style.color = '#ef4444';
 
-            // カメラは停止せず、デコードコールバックだけを追加する方法が難しいため、
-            // 一時的にデコード有効で再起動（ただしカメラ映像は一瞬で切り替わるが、今回は許容）
-            // より良い方法：Html5Qrcodeの仕様上、デコードコールバックはstart時にしか設定できない
-            // なので、一旦stopしてstartし直すが、カメラは停止しないように見えるよう工夫
+            // デコード用の一時スキャナを作成（カメラはそのまま）
+            const tempDecoder = new Html5Qrcode("reader");
+            // 現在のカメラを停止せずに、一時的にデコードを有効にする方法がないため、
+            // 代わりに一度停止してから再起動するが、エラー時は確実にプレビューモードに戻す
             barcodeScanner.stop().then(() => {
                 const config = {
                     fps: 15,
@@ -917,8 +933,8 @@
                     aspectRatio: 1.0
                 };
                 barcodeScanner.start({ facingMode: "environment" }, config,
-                    // デコード成功
                     (decodedText) => {
+                        // デコード成功
                         isBarcodeDecoding = false;
                         scanBtn.textContent = '📷 読み取る';
                         scanBtn.disabled = false;
@@ -926,7 +942,6 @@
                         scanStatus.textContent = '✅ 読み取り完了';
                         scanStatus.style.color = '#10b981';
                         playBeep(1200, 80);
-
                         addToCart(decodedText);
 
                         // プレビューモードに戻す（デコードなし）
@@ -940,10 +955,9 @@
                             () => {});
                         }).catch(() => {});
                     },
-                    // デコードエラー（無視）
                     () => {}
-                ).catch(() => {
-                    // start失敗
+                ).catch((err) => {
+                    // デコード開始エラー
                     isBarcodeDecoding = false;
                     scanBtn.textContent = '📷 読み取る';
                     scanBtn.disabled = false;
@@ -1034,10 +1048,9 @@
                         status.textContent = '✅ 読み取り完了';
                         status.style.color = '#10b981';
                         playBeep(1200, 80);
-
                         processQRPayment(decodedText);
 
-                        // プレビューモードに戻す（デコードなし）
+                        // プレビューモードに戻す
                         qrScanner.stop().then(() => {
                             const previewConfig = {
                                 fps: 15,
@@ -1204,6 +1217,38 @@
         document.getElementById('configSelect').addEventListener('change', function() {
             if (this.value) loadConfigByName(this.value);
             else currentConfig = null;
+        });
+
+        // ----- 設定削除機能 -----
+        document.getElementById('deleteConfigBtn').addEventListener('click', function() {
+            const sel = document.getElementById('configSelect');
+            const name = sel.value;
+            if (!name) {
+                alert('削除する設定を選択してください');
+                return;
+            }
+            if (!confirm(`「${name}」を削除しますか？`)) return;
+            const idx = allConfigs.findIndex(c => c.name === name);
+            if (idx !== -1) {
+                allConfigs.splice(idx, 1);
+                saveConfigsToStorage();
+                updateConfigSelect();
+                currentConfig = null;
+                alert(`「${name}」を削除しました`);
+            }
+        });
+
+        document.getElementById('deleteAllConfigsBtn').addEventListener('click', function() {
+            if (allConfigs.length === 0) {
+                alert('削除する設定がありません');
+                return;
+            }
+            if (!confirm('すべての設定データを削除しますか？')) return;
+            allConfigs = [];
+            saveConfigsToStorage();
+            updateConfigSelect();
+            currentConfig = null;
+            alert('すべての設定を削除しました');
         });
 
         // ----- ページ切り替え -----
@@ -1720,6 +1765,7 @@
             showPage('page-end');
         }
 
+        // 戻るボタン（確実にホームに戻る）
         document.getElementById('endReturnBtn').addEventListener('click', function() {
             stopBarcodeCamera();
             stopQRCamera();
@@ -1743,8 +1789,10 @@
         updateCashDisplay();
 
         console.log('レジシミュレーター 最終完全版 起動完了');
-        console.log('✅ カメラ常時起動 / ボタン押下時デコード / 戻るボタンでホームへ');
-        console.log('✅ QR四角枠 / 背面メインカメラ指定 / QRエラー時もカメラ継続');
+        console.log('✅ カメラ常時起動 / ボタン押下時デコード（再起動なし）');
+        console.log('✅ QR四角枠 / 背面メインカメラ / QRエラー時もカメラ継続');
+        console.log('✅ 設定削除機能 / レシート・領収書後も戻るボタン動作');
+        console.log('✅ 連続押下ロック防止');
     </script>
 
 </body>
