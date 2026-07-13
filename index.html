@@ -260,6 +260,8 @@
             border-radius: 12px;
             margin: 2px 0;
         }
+
+        /* カメラエリア（QR用も共用） */
         .camera-area {
             height: 28vh;
             min-height: 140px;
@@ -284,6 +286,66 @@
             pointer-events: none;
             text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
         }
+
+        /* スキャンガイド枠（バーコード用：横長） */
+        .scan-guide-barcode {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 70%;
+            height: 30%;
+            border: 3px solid rgba(255, 255, 255, 0.4);
+            border-radius: 8px;
+            pointer-events: none;
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.05);
+        }
+        .scan-guide-barcode::after {
+            content: 'バーコードを枠内に';
+            position: absolute;
+            bottom: -28px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.7rem;
+            white-space: nowrap;
+        }
+
+        /* スキャンガイド枠（QR用：正方形） */
+        .scan-guide-qr {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 50%;
+            height: 0;
+            padding-bottom: 50%;
+            border: 3px solid rgba(255, 255, 255, 0.4);
+            border-radius: 8px;
+            pointer-events: none;
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.05);
+        }
+        .scan-guide-qr::after {
+            content: 'QRを枠内に';
+            position: absolute;
+            bottom: -28px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.7rem;
+            white-space: nowrap;
+        }
+        .scan-guide-qr .guide-inner {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
         .scan-control {
             display: flex;
             gap: 10px;
@@ -541,6 +603,7 @@
             width: 100%;
             max-width: 360px;
             position: relative;
+            margin-top: 4px;
         }
         #page-qr .qr-camera #qr-reader {
             width: 100%;
@@ -686,7 +749,7 @@
             </div>
         </div>
 
-        <!-- ========== スキャン画面 ========== -->
+        <!-- ========== スキャン画面（バーコード） ========== -->
         <div id="page-scan" class="page">
             <div class="scan-header">
                 <span class="scan-title">📷 スキャンしてください</span>
@@ -708,6 +771,8 @@
             <div class="camera-area" id="cameraArea">
                 <div id="reader"></div>
                 <div class="cam-overlay">カメラ起動中...</div>
+                <!-- バーコード用ガイド枠（横長） -->
+                <div class="scan-guide-barcode" id="guideBarcode"></div>
             </div>
 
             <div id="scanError" class="toast-error"></div>
@@ -766,6 +831,10 @@
             <div class="qr-title">📱 QRを読み取ってください</div>
             <div class="qr-camera" id="qrCameraArea">
                 <div id="qr-reader"></div>
+                <!-- QR用ガイド枠（正方形） -->
+                <div class="scan-guide-qr" id="guideQR">
+                    <div class="guide-inner"></div>
+                </div>
             </div>
             <div class="qr-control">
                 <button class="btn btn-primary" id="qrScanBtn">📷 読み取る</button>
@@ -798,18 +867,9 @@
 
     <script>
         // ============================================================
-        //  レジシミュレーター 最終完全版
-        //  全修正完了:
-        //  1. カメラは常時起動（プレビュー）。読み取りボタン押下時だけデコード（再起動なし）
-        //  2. QR読み取り枠を四角（200x200）に修正
-        //  3. 現金支払いに「完了」ボタン追加（押すまでお釣り返さない）
-        //  4. 支払い完了後は自動でレシート選択画面へ（次へボタン廃止）
-        //  5. 終了画面に「戻る」ボタン追加（ホームに戻れる）
-        //  6. 背面メインカメラ指定（facingMode: "environment"）
-        //  7. QR失敗時もカメラは継続（エラー時もプレビューモード復帰）
-        //  8. ローカルストレージの設定を削除する機能を追加
-        //  9. レシート/領収書を開いても戻るボタンが効くよう修正
-        //  10.連続押下によるカメラロックを修正（フラグ制御強化）
+        //  レジシミュレーター 真の最終版
+        //  解決策：カメラは常時起動、デコードコールバック内でフラグ制御
+        //  これにより「カメラ再起動」が一切発生しない！
         // ============================================================
 
         // ----- 日付時刻 -----
@@ -873,10 +933,11 @@
         ];
 
         // ============================================================
-        //  バーコードスキャン（カメラ常時起動・ボタン押下時デコード・再起動なし）
+        //  バーコードスキャン（カメラ常時起動・フラグ制御でデコードON/OFF）
         // ============================================================
         let barcodeScanner = null;
-        let isBarcodeDecoding = false;
+        let isBarcodeScanActive = false; // true=読み取り中
+        let barcodeDecoded = false; // デコード済みフラグ（連続処理防止）
 
         function startBarcodeCamera() {
             if (barcodeScanner) return;
@@ -886,14 +947,42 @@
                 qrbox: { width: 200, height: 100 },
                 aspectRatio: 1.0
             };
-            barcodeScanner.start({ facingMode: "environment" }, config, () => {}, () => {})
-                .then(() => {
-                    document.querySelector('.cam-overlay').textContent = 'バーコードをかざしてください';
-                })
-                .catch(err => {
-                    console.warn('カメラ起動エラー:', err);
-                    showToastError('scanError', 'カメラの起動に失敗しました');
-                });
+            // デコードコールバック内でフラグ制御
+            barcodeScanner.start({ facingMode: "environment" }, config,
+                (decodedText) => {
+                    // 読み取り中フラグがON かつ 未デコードの場合のみ処理
+                    if (isBarcodeScanActive && !barcodeDecoded) {
+                        barcodeDecoded = true;
+                        // 読み取り成功
+                        const scanBtn = document.getElementById('scanBtn');
+                        const scanStatus = document.getElementById('scanStatus');
+                        scanBtn.textContent = '📷 読み取る';
+                        scanBtn.disabled = false;
+                        scanBtn.classList.remove('scanning');
+                        scanStatus.textContent = '✅ 読み取り完了';
+                        scanStatus.style.color = '#10b981';
+                        playBeep(1200, 80);
+
+                        addToCart(decodedText);
+
+                        // フラグをリセット（次の読み取りに備える）
+                        isBarcodeScanActive = false;
+                        setTimeout(() => {
+                            barcodeDecoded = false;
+                            scanStatus.textContent = '待機中';
+                            scanStatus.style.color = '#64748b';
+                        }, 1500);
+                    }
+                },
+                (err) => {
+                    // エラーは無視（連続スキャン中は頻発）
+                }
+            ).then(() => {
+                document.querySelector('.cam-overlay').textContent = 'バーコードをかざしてください';
+            }).catch(err => {
+                console.warn('カメラ起動エラー:', err);
+                showToastError('scanError', 'カメラの起動に失敗しました');
+            });
         }
 
         function stopBarcodeCamera() {
@@ -905,15 +994,17 @@
             }
         }
 
-        // 読み取りボタン押下時：デコードのみ実行（カメラ再起動なし）
+        // 読み取りボタン押下：フラグをONにするだけ（カメラ再起動なし）
         function performBarcodeScan() {
-            if (isBarcodeDecoding) return;
+            if (isBarcodeScanActive) return;
             if (!barcodeScanner) {
                 showToastError('scanError', 'カメラが起動していません');
                 return;
             }
 
-            isBarcodeDecoding = true;
+            // 前回のデコード状態をリセット
+            barcodeDecoded = false;
+
             const scanBtn = document.getElementById('scanBtn');
             const scanStatus = document.getElementById('scanStatus');
             scanBtn.textContent = '⏳ 読み取り中...';
@@ -922,77 +1013,30 @@
             scanStatus.textContent = '読み取り中...';
             scanStatus.style.color = '#ef4444';
 
-            // デコード用の一時スキャナを作成（カメラはそのまま）
-            const tempDecoder = new Html5Qrcode("reader");
-            // 現在のカメラを停止せずに、一時的にデコードを有効にする方法がないため、
-            // 代わりに一度停止してから再起動するが、エラー時は確実にプレビューモードに戻す
-            barcodeScanner.stop().then(() => {
-                const config = {
-                    fps: 15,
-                    qrbox: { width: 200, height: 100 },
-                    aspectRatio: 1.0
-                };
-                barcodeScanner.start({ facingMode: "environment" }, config,
-                    (decodedText) => {
-                        // デコード成功
-                        isBarcodeDecoding = false;
-                        scanBtn.textContent = '📷 読み取る';
-                        scanBtn.disabled = false;
-                        scanBtn.classList.remove('scanning');
-                        scanStatus.textContent = '✅ 読み取り完了';
-                        scanStatus.style.color = '#10b981';
-                        playBeep(1200, 80);
-                        addToCart(decodedText);
+            // フラグをONにしてデコードを有効化
+            isBarcodeScanActive = true;
 
-                        // プレビューモードに戻す（デコードなし）
-                        barcodeScanner.stop().then(() => {
-                            const previewConfig = {
-                                fps: 15,
-                                qrbox: { width: 200, height: 100 },
-                                aspectRatio: 1.0
-                            };
-                            barcodeScanner.start({ facingMode: "environment" }, previewConfig, () => {},
-                            () => {});
-                        }).catch(() => {});
-                    },
-                    () => {}
-                ).catch((err) => {
-                    // デコード開始エラー
-                    isBarcodeDecoding = false;
+            // 5秒でタイムアウト
+            setTimeout(() => {
+                if (isBarcodeScanActive) {
+                    isBarcodeScanActive = false;
+                    barcodeDecoded = false;
                     scanBtn.textContent = '📷 読み取る';
                     scanBtn.disabled = false;
                     scanBtn.classList.remove('scanning');
-                    scanStatus.textContent = '❌ エラー';
+                    scanStatus.textContent = '⏱ タイムアウト';
                     scanStatus.style.color = '#ef4444';
-                    showToastError('scanError', 'スキャン開始エラー');
-                    // プレビューモードに戻す
-                    barcodeScanner.stop().then(() => {
-                        const previewConfig = {
-                            fps: 15,
-                            qrbox: { width: 200, height: 100 },
-                            aspectRatio: 1.0
-                        };
-                        barcodeScanner.start({ facingMode: "environment" }, previewConfig, () => {},
-                        () => {});
-                    }).catch(() => {});
-                });
-            }).catch(() => {
-                // stop失敗
-                isBarcodeDecoding = false;
-                scanBtn.textContent = '📷 読み取る';
-                scanBtn.disabled = false;
-                scanBtn.classList.remove('scanning');
-                scanStatus.textContent = '❌ エラー';
-                scanStatus.style.color = '#ef4444';
-                showToastError('scanError', 'カメラ停止エラー');
-            });
+                    showToastError('scanError', '読み取りタイムアウト');
+                }
+            }, 5000);
         }
 
         // ============================================================
-        //  QR決済スキャン（カメラ常時起動・ボタン押下時デコード・四角枠）
+        //  QR決済スキャン（カメラ常時起動・フラグ制御・正方形枠）
         // ============================================================
         let qrScanner = null;
-        let isQRDecoding = false;
+        let isQRScanActive = false;
+        let qrDecoded = false;
 
         function startQRCamera() {
             if (qrScanner) return;
@@ -1002,10 +1046,33 @@
                 qrbox: { width: 200, height: 200 },
                 aspectRatio: 1.0
             };
-            qrScanner.start({ facingMode: "environment" }, config, () => {}, () => {})
-                .catch(err => {
-                    console.warn('QRカメラ起動エラー:', err);
-                });
+            qrScanner.start({ facingMode: "environment" }, config,
+                (decodedText) => {
+                    if (isQRScanActive && !qrDecoded) {
+                        qrDecoded = true;
+                        const btn = document.getElementById('qrScanBtn');
+                        const status = document.getElementById('qrStatus');
+                        btn.textContent = '📷 読み取る';
+                        btn.disabled = false;
+                        btn.classList.remove('scanning');
+                        status.textContent = '✅ 読み取り完了';
+                        status.style.color = '#10b981';
+                        playBeep(1200, 80);
+
+                        processQRPayment(decodedText);
+
+                        isQRScanActive = false;
+                        setTimeout(() => {
+                            qrDecoded = false;
+                            status.textContent = '待機中';
+                            status.style.color = '#64748b';
+                        }, 1500);
+                    }
+                },
+                () => {}
+            ).catch(err => {
+                console.warn('QRカメラ起動エラー:', err);
+            });
         }
 
         function stopQRCamera() {
@@ -1018,13 +1085,13 @@
         }
 
         function performQRScan() {
-            if (isQRDecoding) return;
+            if (isQRScanActive) return;
             if (!qrScanner) {
                 alert('カメラが起動していません');
                 return;
             }
 
-            isQRDecoding = true;
+            qrDecoded = false;
             const btn = document.getElementById('qrScanBtn');
             const status = document.getElementById('qrStatus');
             btn.textContent = '⏳ 読み取り中...';
@@ -1033,73 +1100,19 @@
             status.textContent = '読み取り中...';
             status.style.color = '#ef4444';
 
-            qrScanner.stop().then(() => {
-                const config = {
-                    fps: 15,
-                    qrbox: { width: 200, height: 200 },
-                    aspectRatio: 1.0
-                };
-                qrScanner.start({ facingMode: "environment" }, config,
-                    (decodedText) => {
-                        isQRDecoding = false;
-                        btn.textContent = '📷 読み取る';
-                        btn.disabled = false;
-                        btn.classList.remove('scanning');
-                        status.textContent = '✅ 読み取り完了';
-                        status.style.color = '#10b981';
-                        playBeep(1200, 80);
-                        processQRPayment(decodedText);
+            isQRScanActive = true;
 
-                        // プレビューモードに戻す
-                        qrScanner.stop().then(() => {
-                            const previewConfig = {
-                                fps: 15,
-                                qrbox: { width: 200, height: 200 },
-                                aspectRatio: 1.0
-                            };
-                            qrScanner.start({ facingMode: "environment" }, previewConfig, () => {},
-                            () => {});
-                        }).catch(() => {});
-                    },
-                    () => {}
-                ).catch(() => {
-                    // エラー時もカメラ継続
-                    isQRDecoding = false;
+            setTimeout(() => {
+                if (isQRScanActive) {
+                    isQRScanActive = false;
+                    qrDecoded = false;
                     btn.textContent = '📷 読み取る';
                     btn.disabled = false;
                     btn.classList.remove('scanning');
-                    status.textContent = '❌ エラー';
+                    status.textContent = '⏱ タイムアウト';
                     status.style.color = '#ef4444';
-                    // プレビューモードに戻す
-                    qrScanner.stop().then(() => {
-                        const previewConfig = {
-                            fps: 15,
-                            qrbox: { width: 200, height: 200 },
-                            aspectRatio: 1.0
-                        };
-                        qrScanner.start({ facingMode: "environment" }, previewConfig, () => {},
-                        () => {});
-                    }).catch(() => {});
-                });
-            }).catch(() => {
-                // stop失敗時もカメラ継続
-                isQRDecoding = false;
-                btn.textContent = '📷 読み取る';
-                btn.disabled = false;
-                btn.classList.remove('scanning');
-                status.textContent = '❌ エラー';
-                status.style.color = '#ef4444';
-                // カメラ再起動試行
-                qrScanner.stop().then(() => {
-                    const previewConfig = {
-                        fps: 15,
-                        qrbox: { width: 200, height: 200 },
-                        aspectRatio: 1.0
-                    };
-                    qrScanner.start({ facingMode: "environment" }, previewConfig, () => {},
-                    () => {});
-                }).catch(() => {});
-            });
+                }
+            }, 5000);
         }
 
         function processQRPayment(decodedText) {
@@ -1669,7 +1682,8 @@
             document.getElementById('scanBtn').textContent = '📷 読み取る';
             document.getElementById('scanBtn').disabled = false;
             document.getElementById('scanBtn').classList.remove('scanning');
-            isBarcodeDecoding = false;
+            isBarcodeScanActive = false;
+            barcodeDecoded = false;
 
             showPage('page-scan');
             setTimeout(() => {
@@ -1687,6 +1701,9 @@
                 showToastError('scanError', '商品をスキャンしてください');
                 return;
             }
+            // スキャンフラグをリセット
+            isBarcodeScanActive = false;
+            barcodeDecoded = false;
             lastPaymentMethod = '';
             lastInsertedAmount = 0;
             showPage('page-payment');
@@ -1729,7 +1746,8 @@
             document.getElementById('qrScanBtn').textContent = '📷 読み取る';
             document.getElementById('qrScanBtn').disabled = false;
             document.getElementById('qrScanBtn').classList.remove('scanning');
-            isQRDecoding = false;
+            isQRScanActive = false;
+            qrDecoded = false;
             showPage('page-qr');
             setTimeout(() => {
                 startQRCamera();
@@ -1762,13 +1780,22 @@
 
         function finishTransaction() {
             clearCart();
+            // スキャンフラグをリセット
+            isBarcodeScanActive = false;
+            barcodeDecoded = false;
+            isQRScanActive = false;
+            qrDecoded = false;
             showPage('page-end');
         }
 
-        // 戻るボタン（確実にホームに戻る）
         document.getElementById('endReturnBtn').addEventListener('click', function() {
             stopBarcodeCamera();
             stopQRCamera();
+            // フラグリセット
+            isBarcodeScanActive = false;
+            barcodeDecoded = false;
+            isQRScanActive = false;
+            qrDecoded = false;
             showPage('page-home');
         });
 
@@ -1788,11 +1815,12 @@
         updateCartDisplay();
         updateCashDisplay();
 
-        console.log('レジシミュレーター 最終完全版 起動完了');
-        console.log('✅ カメラ常時起動 / ボタン押下時デコード（再起動なし）');
-        console.log('✅ QR四角枠 / 背面メインカメラ / QRエラー時もカメラ継続');
-        console.log('✅ 設定削除機能 / レシート・領収書後も戻るボタン動作');
-        console.log('✅ 連続押下ロック防止');
+        console.log('レジシミュレーター 真の最終版 起動完了');
+        console.log('✅ カメラ常時起動（再起動ゼロ）');
+        console.log('✅ デコードはフラグ制御（ボタン押下でON）');
+        console.log('✅ QR枠はCSSで正方形ガイド');
+        console.log('✅ エラー時もカメラ継続');
+        console.log('✅ 設定削除機能付き');
     </script>
 
 </body>
