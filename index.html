@@ -4,19 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>レジごっこ</title>
-  <!-- html5-qrcode ライブラリ（カメラ読み取り用） -->
-  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js">
+  </script>
   <style>
-    /* リセット＆ベース */
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      user-select: none;
-      -webkit-tap-highlight-color: transparent;
+      font-family: 'Segoe UI', system-ui, sans-serif;
     }
     body {
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
       background: #f0f2f5;
       color: #1e293b;
       height: 100vh;
@@ -25,7 +22,6 @@
       display: flex;
       flex-direction: column;
     }
-    /* 日付時刻（左上固定） */
     #datetime {
       position: fixed;
       top: 8px;
@@ -33,14 +29,13 @@
       font-size: 0.85rem;
       font-weight: 600;
       color: #475569;
-      background: rgba(255,255,255,0.8);
-      padding: 4px 12px;
+      background: rgba(255, 255, 255, 0.85);
+      padding: 4px 14px;
       border-radius: 40px;
       backdrop-filter: blur(4px);
       z-index: 100;
       pointer-events: none;
     }
-    /* メインコンテナ */
     #app {
       flex: 1;
       display: flex;
@@ -52,7 +47,6 @@
       position: relative;
       overflow: hidden;
     }
-    /* 各画面（ページ） */
     .page {
       display: none;
       flex-direction: column;
@@ -64,10 +58,15 @@
       display: flex;
     }
     @keyframes fadeIn {
-      from { opacity: 0.6; transform: translateY(6px); }
-      to { opacity: 1; transform: translateY(0); }
+      from {
+        opacity: 0.6;
+        transform: translateY(6px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
-    /* ボタン共通 */
     .btn {
       padding: 14px 28px;
       border: none;
@@ -76,7 +75,7 @@
       font-weight: 700;
       cursor: pointer;
       transition: transform 0.1s, box-shadow 0.1s;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
       touch-action: manipulation;
       display: inline-flex;
       align-items: center;
@@ -90,23 +89,31 @@
       background: #3b82f6;
       color: white;
     }
-    .btn-primary:active { background: #2563eb; }
+    .btn-primary:active {
+      background: #2563eb;
+    }
     .btn-success {
       background: #10b981;
       color: white;
     }
-    .btn-success:active { background: #059669; }
+    .btn-success:active {
+      background: #059669;
+    }
     .btn-danger {
       background: #ef4444;
       color: white;
     }
-    .btn-danger:active { background: #dc2626; }
+    .btn-danger:active {
+      background: #dc2626;
+    }
     .btn-outline {
       background: white;
       color: #1e293b;
       border: 2px solid #e2e8f0;
     }
-    .btn-outline:active { background: #f1f5f9; }
+    .btn-outline:active {
+      background: #f1f5f9;
+    }
     .btn-lg {
       font-size: 1.6rem;
       padding: 24px 48px;
@@ -115,6 +122,23 @@
     .btn-sm {
       font-size: 0.9rem;
       padding: 8px 16px;
+    }
+    .btn:disabled {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+    .btn.scanning {
+      background: #ef4444;
+      animation: pulse 0.8s infinite;
+    }
+    @keyframes pulse {
+      0%,
+      100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.6;
+      }
     }
 
     /* ===== 初期画面 ===== */
@@ -153,6 +177,8 @@
       background: #f8fafc;
       cursor: pointer;
       transition: 0.2s;
+      font-weight: 600;
+      color: #475569;
     }
     .home-sub .file-upload-area:active {
       background: #e2e8f0;
@@ -163,13 +189,13 @@
 
     /* ===== スキャン画面 ===== */
     #page-scan {
-      gap: 8px;
+      gap: 6px;
     }
     .scan-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding-bottom: 6px;
+      padding-bottom: 4px;
     }
     .scan-header .scan-title {
       font-size: 1.2rem;
@@ -188,45 +214,50 @@
       background: white;
       border-radius: 16px;
       padding: 8px 12px;
-      min-height: 100px;
-      max-height: 45vh;
-      box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+      min-height: 80px;
+      max-height: 35vh;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
     }
     .scan-list .empty {
       color: #94a3b8;
       text-align: center;
-      padding: 24px 0;
+      padding: 20px 0;
       font-style: italic;
     }
     .scan-item {
       display: flex;
       justify-content: space-between;
-      padding: 8px 0;
+      padding: 6px 0;
       border-bottom: 1px solid #f1f5f9;
       font-size: 0.95rem;
     }
-    .scan-item:last-child { border-bottom: none; }
-    .scan-item .sname { font-weight: 600; }
-    .scan-item .sprice { color: #475569; }
+    .scan-item:last-child {
+      border-bottom: none;
+    }
+    .scan-item .sname {
+      font-weight: 600;
+    }
+    .scan-item .sprice {
+      color: #475569;
+    }
     .scan-total {
       display: flex;
       justify-content: space-between;
       font-weight: 700;
       font-size: 1.1rem;
-      padding: 8px 4px;
+      padding: 6px 4px;
       background: #f1f5f9;
       border-radius: 12px;
-      margin: 4px 0;
+      margin: 2px 0;
     }
-    /* カメラ領域（下側） */
     .camera-area {
-      height: 30vh;
-      min-height: 160px;
+      height: 28vh;
+      min-height: 140px;
       background: #1e293b;
       border-radius: 20px;
       overflow: hidden;
       position: relative;
-      margin-top: 6px;
+      margin-top: 4px;
     }
     .camera-area #reader {
       width: 100%;
@@ -238,16 +269,45 @@
       left: 0;
       right: 0;
       text-align: center;
-      color: rgba(255,255,255,0.7);
+      color: rgba(255, 255, 255, 0.5);
       font-size: 0.8rem;
       pointer-events: none;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
     }
-    /* スキャン画面の次へボタン */
+    .scan-control {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin: 4px 0;
+      flex-wrap: wrap;
+    }
+    .scan-control .btn {
+      flex: 1;
+      min-width: 100px;
+      padding: 10px 16px;
+      font-size: 1rem;
+    }
+    .scan-control .scan-status {
+      font-size: 0.9rem;
+      color: #64748b;
+      min-width: 60px;
+    }
     .scan-next {
       display: flex;
       justify-content: flex-end;
-      padding: 8px 0;
+      padding: 4px 0;
+    }
+    .toast-error {
+      background: #fef2f2;
+      color: #b91c1c;
+      padding: 8px 16px;
+      border-radius: 40px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      border: 1px solid #fecaca;
+      text-align: center;
+      margin: 2px 0;
+      display: none;
     }
 
     /* ===== 支払い方法選択 ===== */
@@ -277,7 +337,7 @@
 
     /* ===== 現金支払い ===== */
     #page-cash {
-      gap: 6px;
+      gap: 4px;
     }
     .cash-header {
       display: flex;
@@ -286,8 +346,12 @@
       font-size: 1.1rem;
       padding: 4px 0;
     }
-    .cash-header .cash-total-label { color: #475569; }
-    .cash-header .cash-total-amount { color: #0f172a; }
+    .cash-header .cash-total-label {
+      color: #475569;
+    }
+    .cash-header .cash-total-amount {
+      color: #0f172a;
+    }
     .cash-wallet {
       display: flex;
       flex-wrap: wrap;
@@ -295,8 +359,10 @@
       background: #f8fafc;
       border-radius: 16px;
       padding: 10px 12px;
-      min-height: 60px;
+      min-height: 56px;
       border: 2px solid #e2e8f0;
+      max-height: 120px;
+      overflow-y: auto;
     }
     .cash-wallet .money-item {
       display: flex;
@@ -305,34 +371,33 @@
       background: white;
       border-radius: 12px;
       padding: 4px 8px 6px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
       cursor: grab;
       touch-action: none;
       transition: 0.1s;
       border: 1px solid #e2e8f0;
-      min-width: 52px;
+      min-width: 48px;
     }
     .cash-wallet .money-item:active {
       transform: scale(0.92);
       opacity: 0.6;
     }
     .cash-wallet .money-item img {
-      width: 44px;
+      width: 38px;
       height: auto;
       pointer-events: none;
     }
     .cash-wallet .money-item .mcount {
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       font-weight: 600;
       color: #475569;
       margin-top: 2px;
     }
-    /* ドロップゾーン（赤枠） */
     .drop-zone {
       border: 4px dashed #ef4444;
       border-radius: 20px;
-      background: rgba(239,68,68,0.05);
-      min-height: 80px;
+      background: rgba(239, 68, 68, 0.05);
+      min-height: 64px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -340,13 +405,13 @@
       font-weight: 600;
       font-size: 1rem;
       transition: 0.2s;
-      margin: 4px 0;
-      padding: 12px;
+      margin: 2px 0;
+      padding: 10px;
       flex-wrap: wrap;
       gap: 6px;
     }
     .drop-zone.dragover {
-      background: rgba(239,68,68,0.15);
+      background: rgba(239, 68, 68, 0.15);
       border-color: #dc2626;
     }
     .drop-zone .dropped-money {
@@ -356,27 +421,29 @@
       background: white;
       padding: 4px 10px 4px 6px;
       border-radius: 40px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
     }
     .drop-zone .dropped-money img {
-      width: 32px;
+      width: 28px;
       height: auto;
     }
     .cash-actions {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 6px 0;
+      padding: 4px 0;
     }
     .cash-actions .cash-input-display {
-      font-size: 1.2rem;
+      font-size: 1.1rem;
       font-weight: 700;
     }
-    .cash-actions .cash-input-display span { color: #0f172a; }
+    .cash-actions .cash-input-display span {
+      color: #0f172a;
+    }
 
     /* ===== カード決済 ===== */
     #page-card {
-      gap: 8px;
+      gap: 6px;
       justify-content: center;
       align-items: center;
     }
@@ -386,10 +453,10 @@
     }
     .card-wallet {
       display: flex;
-      gap: 16px;
+      gap: 12px;
       flex-wrap: wrap;
       justify-content: center;
-      padding: 12px;
+      padding: 10px;
       background: #f8fafc;
       border-radius: 20px;
       border: 2px solid #e2e8f0;
@@ -398,23 +465,23 @@
     }
     .card-wallet .card-item {
       background: white;
-      padding: 8px 12px;
+      padding: 6px 10px;
       border-radius: 12px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
       cursor: grab;
       touch-action: none;
       border: 1px solid #e2e8f0;
       display: flex;
       flex-direction: column;
       align-items: center;
-      min-width: 70px;
+      min-width: 64px;
     }
     .card-wallet .card-item:active {
       transform: scale(0.92);
       opacity: 0.6;
     }
     .card-wallet .card-item img {
-      width: 56px;
+      width: 48px;
       height: auto;
       pointer-events: none;
     }
@@ -432,22 +499,26 @@
     }
     .card-spinner {
       display: none;
-      width: 48px;
-      height: 48px;
+      width: 44px;
+      height: 44px;
       border: 4px solid #e2e8f0;
       border-top-color: #3b82f6;
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
-      margin: 8px auto;
+      margin: 4px auto;
     }
-    .card-spinner.show { display: block; }
+    .card-spinner.show {
+      display: block;
+    }
     @keyframes spin {
-      to { transform: rotate(360deg); }
+      to {
+        transform: rotate(360deg);
+      }
     }
 
     /* ===== QR決済 ===== */
     #page-qr {
-      gap: 8px;
+      gap: 6px;
       justify-content: center;
       align-items: center;
     }
@@ -456,8 +527,8 @@
       font-weight: 700;
     }
     #page-qr .qr-camera {
-      height: 30vh;
-      min-height: 160px;
+      height: 28vh;
+      min-height: 140px;
       background: #1e293b;
       border-radius: 20px;
       overflow: hidden;
@@ -475,6 +546,25 @@
       color: #10b981;
       min-height: 2.4rem;
       text-align: center;
+    }
+    .qr-control {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin: 4px 0;
+      flex-wrap: wrap;
+      width: 100%;
+      max-width: 320px;
+    }
+    .qr-control .btn {
+      flex: 1;
+      min-width: 100px;
+      padding: 10px 16px;
+      font-size: 1rem;
+    }
+    .qr-control .qr-status {
+      font-size: 0.9rem;
+      color: #64748b;
     }
 
     /* ===== レシート／領収書選択 ===== */
@@ -502,9 +592,14 @@
       min-width: 140px;
       padding: 16px 28px;
       font-size: 1.1rem;
+      border-radius: 60px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.1s;
     }
     .btn-no-receipt:active {
       background: #e2e8f0;
+      transform: scale(0.94);
     }
 
     /* ===== 終了画面 ===== */
@@ -517,16 +612,22 @@
       animation: fadeIn 0.4s ease;
     }
 
-    /* その他ユーティリティ */
-    .mt-2 { margin-top: 8px; }
-    .mb-2 { margin-bottom: 8px; }
-    .flex-1 { flex: 1; }
-    .text-center { text-align: center; }
-    .text-muted { color: #94a3b8; }
-    .gap-1 { gap: 4px; }
-    .w-full { width: 100%; }
+    .flex-1 {
+      flex: 1;
+    }
+    .text-center {
+      text-align: center;
+    }
+    .w-full {
+      width: 100%;
+    }
+    .mt-1 {
+      margin-top: 4px;
+    }
+    .mb-1 {
+      margin-bottom: 4px;
+    }
 
-    /* スクロールバー */
     .scan-list::-webkit-scrollbar {
       width: 4px;
     }
@@ -537,1014 +638,1052 @@
       background: #cbd5e1;
       border-radius: 8px;
     }
-
-    /* エラーメッセージ用 */
-    .toast-error {
-      background: #fef2f2;
-      color: #b91c1c;
-      padding: 8px 16px;
-      border-radius: 40px;
-      font-weight: 600;
-      font-size: 0.9rem;
-      border: 1px solid #fecaca;
-      text-align: center;
-      margin: 4px 0;
+    .cash-wallet::-webkit-scrollbar {
+      width: 4px;
+    }
+    .cash-wallet::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .cash-wallet::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 8px;
     }
   </style>
 </head>
 <body>
 
-<!-- 日付時刻 -->
-<div id="datetime"></div>
+  <div id="datetime"></div>
 
-<div id="app">
-  <!-- ========== 初期画面 ========== -->
-  <div id="page-home" class="page active">
-    <div class="home-title">🧾 レジごっこ</div>
-    <div class="home-sub">
-      <select id="configSelect">
-        <option value="">-- 設定を選択 --</option>
-      </select>
-      <div class="file-upload-area" id="fileUploadArea">
-        <span>📂 商品データを追加</span>
-        <input type="file" id="fileInput" accept=".json" multiple>
+  <div id="app">
+    <!-- ========== 初期画面 ========== -->
+    <div id="page-home" class="page active">
+      <div class="home-title">🧾 レジごっこ</div>
+      <div class="home-sub">
+        <select id="configSelect">
+          <option value="">-- 設定を選択 --</option>
+        </select>
+        <div class="file-upload-area" id="fileUploadArea">
+          <span>📂 商品データを追加</span>
+          <input type="file" id="fileInput" accept=".json" multiple>
+        </div>
+        <button class="btn btn-primary btn-lg" id="startBtn">▶ 開始</button>
       </div>
-      <button class="btn btn-primary btn-lg" id="startBtn">▶ 開始</button>
+    </div>
+
+    <!-- ========== スキャン画面 ========== -->
+    <div id="page-scan" class="page">
+      <div class="scan-header">
+        <span class="scan-title">📷 スキャンしてください</span>
+        <span class="scan-count" id="scanCount">0点</span>
+      </div>
+      <div class="scan-list" id="scanList">
+        <div class="empty">商品をスキャンするとここに表示されます</div>
+      </div>
+      <div class="scan-total">
+        <span>合計</span>
+        <span id="scanTotalPrice">0 円</span>
+      </div>
+
+      <div class="scan-control">
+        <button class="btn btn-primary" id="scanBtn">📷 読み取る</button>
+        <span class="scan-status" id="scanStatus">待機中</span>
+      </div>
+
+      <div class="camera-area" id="cameraArea">
+        <div id="reader"></div>
+        <div class="cam-overlay">カメラ起動中...</div>
+      </div>
+
+      <div id="scanError" class="toast-error"></div>
+      <div class="scan-next">
+        <button class="btn btn-success" id="scanNextBtn">次へ →</button>
+      </div>
+    </div>
+
+    <!-- ========== 支払い方法選択 ========== -->
+    <div id="page-payment" class="page">
+      <div class="pay-title">💳 支払い方法を選んでください</div>
+      <div class="pay-buttons">
+        <button class="btn btn-primary" id="payCashBtn">💰 現金</button>
+        <button class="btn btn-primary" id="payCardBtn">💳 クレジットカード</button>
+        <button class="btn btn-primary" id="payQRBtn">📱 QR決済</button>
+      </div>
+    </div>
+
+    <!-- ========== 現金支払い ========== -->
+    <div id="page-cash" class="page">
+      <div class="cash-header">
+        <span>💰 お金を入れてください</span>
+        <span class="cash-total-amount" id="cashTotalDisplay">0 円</span>
+      </div>
+      <div class="cash-wallet" id="cashWallet"></div>
+      <div class="drop-zone" id="dropZone">
+        <span id="dropHint">ここにドラッグ＆ドロップ（タップでも投入）</span>
+      </div>
+      <div class="cash-actions">
+        <span class="cash-input-display">投入額：<span id="cashInserted">0</span> 円</span>
+        <span class="cash-input-display">購入額：<span id="cashPurchase">0</span> 円</span>
+      </div>
+      <div id="cashError" class="toast-error"></div>
+      <div style="display:flex; justify-content:flex-end; margin-top:4px;">
+        <button class="btn btn-success" id="cashNextBtn" disabled>次へ →</button>
+      </div>
+    </div>
+
+    <!-- ========== カード決済 ========== -->
+    <div id="page-card" class="page">
+      <div class="card-title">💳 カードを差し込んでください</div>
+      <div class="card-wallet" id="cardWallet"></div>
+      <div class="drop-zone" id="cardDropZone">
+        <span id="cardDropHint">ここにカードをドラッグ（タップでも投入）</span>
+      </div>
+      <div class="card-spinner" id="cardSpinner"></div>
+      <div class="card-status" id="cardStatus"></div>
+      <div style="display:flex; justify-content:space-between; width:100%; max-width:320px; padding:4px 0;">
+        <span class="cash-input-display">購入額：<span id="cardPurchase">0</span> 円</span>
+        <span class="cash-input-display">投入額：<span id="cardInserted">0</span> 円</span>
+      </div>
+      <div style="display:flex; justify-content:flex-end; width:100%; max-width:320px;">
+        <button class="btn btn-success" id="cardNextBtn" disabled>次へ →</button>
+      </div>
+    </div>
+
+    <!-- ========== QR決済 ========== -->
+    <div id="page-qr" class="page">
+      <div class="qr-title">📱 QRを読み取ってください</div>
+      <div class="qr-camera" id="qrCameraArea">
+        <div id="qr-reader"></div>
+      </div>
+      <div class="qr-control">
+        <button class="btn btn-primary" id="qrScanBtn">📷 読み取る</button>
+        <span class="qr-status" id="qrStatus">待機中</span>
+      </div>
+      <div class="qr-result" id="qrResult"></div>
+      <div style="display:flex; justify-content:space-between; width:100%; max-width:320px; padding:4px 0;">
+        <span class="cash-input-display">購入額：<span id="qrPurchase">0</span> 円</span>
+        <span class="cash-input-display">投入額：<span id="qrInserted">0</span> 円</span>
+      </div>
+      <div style="display:flex; justify-content:flex-end; width:100%; max-width:320px;">
+        <button class="btn btn-success" id="qrNextBtn" disabled>次へ →</button>
+      </div>
+    </div>
+
+    <!-- ========== レシート／領収書選択 ========== -->
+    <div id="page-receipt" class="page">
+      <div style="font-size:1.2rem; font-weight:700; margin-bottom:8px;">🧾 レシート / 領収書</div>
+      <div class="receipt-buttons">
+        <button class="btn btn-outline" id="receiptBtn">🧾 レシート</button>
+        <button class="btn btn-outline" id="invoiceBtn">📄 領収書</button>
+      </div>
+      <button class="btn-no-receipt" id="noReceiptBtn">不要</button>
+    </div>
+
+    <!-- ========== 終了画面 ========== -->
+    <div id="page-end" class="page">
+      <div>ご利用ありがとうございました</div>
     </div>
   </div>
 
-  <!-- ========== スキャン画面 ========== -->
-  <div id="page-scan" class="page">
-    <div class="scan-header">
-      <span class="scan-title">📷 スキャンしてください</span>
-      <span class="scan-count" id="scanCount">0点</span>
-    </div>
-    <div class="scan-list" id="scanList">
-      <div class="empty">商品をスキャンするとここに表示されます</div>
-    </div>
-    <div class="scan-total">
-      <span>合計</span>
-      <span id="scanTotalPrice">0 円</span>
-    </div>
-    <div class="camera-area" id="cameraArea">
-      <div id="reader"></div>
-      <div class="cam-overlay">バーコードをかざしてください</div>
-    </div>
-    <div id="scanError" class="toast-error" style="display:none;"></div>
-    <div class="scan-next">
-      <button class="btn btn-success" id="scanNextBtn">次へ →</button>
-    </div>
-  </div>
+  <script>
+    // ============================================================
+    //  レジシミュレーター（ボタン押下時のみスキャン） 完全版
+    // ============================================================
 
-  <!-- ========== 支払い方法選択 ========== -->
-  <div id="page-payment" class="page">
-    <div class="pay-title">💳 支払い方法を選んでください</div>
-    <div class="pay-buttons">
-      <button class="btn btn-primary" id="payCashBtn">💰 現金</button>
-      <button class="btn btn-primary" id="payCardBtn">💳 クレジットカード</button>
-      <button class="btn btn-primary" id="payQRBtn">📱 QR決済</button>
-    </div>
-  </div>
+    // ----- 日付時刻 -----
+    function updateDateTime() {
+      const now = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      document.getElementById('datetime').textContent =
+        `${now.getFullYear()}/${pad(now.getMonth()+1)}/${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    }
+    setInterval(updateDateTime, 10000);
+    updateDateTime();
 
-  <!-- ========== 現金支払い ========== -->
-  <div id="page-cash" class="page">
-    <div class="cash-header">
-      <span>💰 お金を入れてください</span>
-      <span class="cash-total-amount" id="cashTotalDisplay">0 円</span>
-    </div>
-    <div class="cash-wallet" id="cashWallet">
-      <!-- JSで動的生成 -->
-    </div>
-    <div class="drop-zone" id="dropZone">
-      <span id="dropHint">ここにドラッグ＆ドロップ</span>
-    </div>
-    <div class="cash-actions">
-      <span class="cash-input-display">投入額：<span id="cashInserted">0</span> 円</span>
-      <span class="cash-input-display">購入額：<span id="cashPurchase">0</span> 円</span>
-    </div>
-    <div id="cashError" class="toast-error" style="display:none;"></div>
-    <div style="display:flex; justify-content:flex-end; margin-top:4px;">
-      <button class="btn btn-success" id="cashNextBtn">次へ →</button>
-    </div>
-  </div>
-
-  <!-- ========== カード決済 ========== -->
-  <div id="page-card" class="page">
-    <div class="card-title">💳 カードを差し込んでください</div>
-    <div class="card-wallet" id="cardWallet">
-      <!-- JSで動的生成 -->
-    </div>
-    <div class="drop-zone" id="cardDropZone">
-      <span id="cardDropHint">ここにカードをドラッグ</span>
-    </div>
-    <div class="card-spinner" id="cardSpinner"></div>
-    <div class="card-status" id="cardStatus"></div>
-    <div style="display:flex; justify-content:space-between; width:100%; max-width:320px; padding:6px 0;">
-      <span class="cash-input-display">購入額：<span id="cardPurchase">0</span> 円</span>
-      <span class="cash-input-display">投入額：<span id="cardInserted">0</span> 円</span>
-    </div>
-    <div style="display:flex; justify-content:flex-end; width:100%; max-width:320px;">
-      <button class="btn btn-success" id="cardNextBtn" disabled>次へ →</button>
-    </div>
-  </div>
-
-  <!-- ========== QR決済 ========== -->
-  <div id="page-qr" class="page">
-    <div class="qr-title">📱 QRを読み取ってください</div>
-    <div class="qr-camera" id="qrCameraArea">
-      <div id="qr-reader"></div>
-    </div>
-    <div class="qr-result" id="qrResult"></div>
-    <div style="display:flex; justify-content:space-between; width:100%; max-width:320px; padding:6px 0;">
-      <span class="cash-input-display">購入額：<span id="qrPurchase">0</span> 円</span>
-      <span class="cash-input-display">投入額：<span id="qrInserted">0</span> 円</span>
-    </div>
-    <div style="display:flex; justify-content:flex-end; width:100%; max-width:320px;">
-      <button class="btn btn-success" id="qrNextBtn" disabled>次へ →</button>
-    </div>
-  </div>
-
-  <!-- ========== レシート／領収書選択 ========== -->
-  <div id="page-receipt" class="page">
-    <div style="font-size:1.2rem; font-weight:700; margin-bottom:8px;">🧾 レシート / 領収書</div>
-    <div class="receipt-buttons">
-      <button class="btn btn-outline" id="receiptBtn">🧾 レシート</button>
-      <button class="btn btn-outline" id="invoiceBtn">📄 領収書</button>
-    </div>
-    <button class="btn-no-receipt" id="noReceiptBtn">不要</button>
-  </div>
-
-  <!-- ========== 終了画面 ========== -->
-  <div id="page-end" class="page">
-    <div>ご利用ありがとうございました</div>
-  </div>
-</div>
-
-<script>
-// ============================================================
-//  全機能実装
-// ============================================================
-
-// ----- サウンド（Web Audio API） -----
-function playBeep(freq = 880, duration = 120) {
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.value = freq;
-    gain.gain.setValueAtTime(0.3, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration/1000);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + duration/1000);
-  } catch(e) { /* 無音 */ }
-}
-
-// ----- 日付時刻更新 -----
-function updateDateTime() {
-  const now = new Date();
-  const pad = n => String(n).padStart(2,'0');
-  const str = `${now.getFullYear()}/${pad(now.getMonth()+1)}/${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
-  document.getElementById('datetime').textContent = str;
-}
-setInterval(updateDateTime, 10000);
-updateDateTime();
-
-// ----- グローバル状態 -----
-let currentConfig = null;           // 読み込んだ設定オブジェクト
-let allConfigs = [];               // localStorage に保存された設定一覧 { name, data }
-let cart = {};                     // { barcode: { name, price, quantity } }
-let totalAmount = 0;               // カート合計金額（キャッシュ）
-let totalItems = 0;                // 合計点数
-
-// 現金・カードの状態
-let cashWallet = {};  // { denomination: count }
-let insertedCash = 0; // 投入された合計金額
-let cardInserted = false; // カード差し込み済みフラグ
-let qrScanned = false;
-
-// 決済情報（レシート用）
-let lastPaymentMethod = '';
-let lastInsertedAmount = 0;
-
-// 金種リスト（画像ファイル名と値）
-const DENOMINATIONS = [
-  { value: 10000, file: '10000.png', label: '1万円' },
-  { value: 5000,  file: '5000.png',  label: '5千円' },
-  { value: 1000,  file: '1000.png',  label: '千円' },
-  { value: 500,   file: '500.png',   label: '五百円' },
-  { value: 100,   file: '100.png',   label: '百円' },
-  { value: 50,    file: '50.png',    label: '五十円' },
-  { value: 10,    file: '10.png',    label: '十円' },
-  { value: 5,     file: '5.png',     label: '五円' },
-  { value: 1,     file: '1.png',     label: '一円' }
-];
-
-// カード情報
-const CARDS = [
-  { id: 'card1', name: 'VISA', file: 'card1.png' },
-  { id: 'card2', name: 'Master', file: 'card2.png' },
-  { id: 'card3', name: 'JCB', file: 'card3.png' }
-];
-
-// ----- 初期化（現金財布） -----
-function initCashWallet() {
-  cashWallet = {};
-  // 初期枚数：札・五百円→2枚、百円→7、五十→5、十以下→10
-  for (const d of DENOMINATIONS) {
-    let init = 0;
-    if (d.value >= 1000 || d.value === 500) init = 2;
-    else if (d.value === 100) init = 7;
-    else if (d.value === 50) init = 5;
-    else init = 10; // 10,5,1
-    cashWallet[d.value] = init;
-  }
-}
-
-// ----- 設定読み込み / localStorage 操作 -----
-function loadConfigsFromStorage() {
-  try {
-    const raw = localStorage.getItem('register_configs');
-    allConfigs = raw ? JSON.parse(raw) : [];
-  } catch { allConfigs = []; }
-}
-
-function saveConfigsToStorage() {
-  localStorage.setItem('register_configs', JSON.stringify(allConfigs));
-}
-
-function loadConfigByName(name) {
-  const found = allConfigs.find(c => c.name === name);
-  if (found) {
-    currentConfig = found.data;
-    return true;
-  }
-  return false;
-}
-
-// 設定選択ドロップダウン更新
-function updateConfigSelect() {
-  const sel = document.getElementById('configSelect');
-  const currentVal = sel.value;
-  sel.innerHTML = '<option value="">-- 設定を選択 --</option>';
-  for (const c of allConfigs) {
-    const opt = document.createElement('option');
-    opt.value = c.name;
-    opt.textContent = c.name;
-    sel.appendChild(opt);
-  }
-  if (currentVal && allConfigs.some(c => c.name === currentVal)) {
-    sel.value = currentVal;
-  } else if (allConfigs.length > 0) {
-    sel.value = allConfigs[0].name;
-  }
-  // 選択を反映
-  if (sel.value) {
-    loadConfigByName(sel.value);
-  } else {
-    currentConfig = null;
-  }
-}
-
-// JSONファイル読み込み
-document.getElementById('fileInput').addEventListener('change', function(e) {
-  const files = e.target.files;
-  for (const file of files) {
-    const reader = new FileReader();
-    reader.onload = function(ev) {
+    // ----- サウンド -----
+    function playBeep(freq = 880, duration = 120) {
       try {
-        const data = JSON.parse(ev.target.result);
-        if (!data.products || typeof data.products !== 'object') {
-          alert('商品データが正しくありません（"products" オブジェクトが必要です）');
-          return;
+        const ctx = new(window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.2, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration / 1000);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + duration / 1000);
+      } catch (e) {}
+    }
+
+    // ----- グローバル状態 -----
+    let currentConfig = null;
+    let allConfigs = [];
+    let cart = {};
+    let totalAmount = 0;
+    let totalItems = 0;
+
+    // 現金・カード・QR
+    let cashWallet = {};
+    let insertedCash = 0;
+    let cardInserted = false;
+    let qrScanned = false;
+    let lastPaymentMethod = '';
+    let lastInsertedAmount = 0;
+
+    const DENOMINATIONS = [
+      { value: 10000, file: '10000.png', label: '1万円' },
+      { value: 5000, file: '5000.png', label: '5千円' },
+      { value: 1000, file: '1000.png', label: '千円' },
+      { value: 500, file: '500.png', label: '五百円' },
+      { value: 100, file: '100.png', label: '百円' },
+      { value: 50, file: '50.png', label: '五十円' },
+      { value: 10, file: '10.png', label: '十円' },
+      { value: 5, file: '5.png', label: '五円' },
+      { value: 1, file: '1.png', label: '一円' }
+    ];
+
+    const CARDS = [
+      { id: 'card1', name: 'VISA', file: 'card1.png' },
+      { id: 'card2', name: 'Master', file: 'card2.png' },
+      { id: 'card3', name: 'JCB', file: 'card3.png' }
+    ];
+
+    // ----- カメラ制御（スキャン画面用） -----
+    let html5QrCode = null;
+    let isScanning = false;
+    let scanTimeout = null;
+
+    function startCamera() {
+      if (html5QrCode) return;
+      html5QrCode = new Html5Qrcode("reader");
+      const config = { fps: 15, qrbox: { width: 200, height: 100 }, aspectRatio: 1.0 };
+      html5QrCode.start({ facingMode: "environment" }, config, () => {}, () => {})
+        .then(() => {
+          document.querySelector('.cam-overlay').textContent = 'バーコードをかざしてください';
+        })
+        .catch(err => {
+          console.warn('カメラ起動エラー:', err);
+          showToastError('scanError', 'カメラの起動に失敗しました');
+        });
+    }
+
+    function stopCamera() {
+      if (html5QrCode) {
+        html5QrCode.stop().then(() => {
+          html5QrCode.clear();
+          html5QrCode = null;
+        }).catch(() => {});
+      }
+    }
+
+    // スキャン画面の「読み取る」ボタン
+    function performScan() {
+      if (isScanning) return;
+      if (!html5QrCode) {
+        showToastError('scanError', 'カメラが起動していません');
+        return;
+      }
+
+      isScanning = true;
+      const scanBtn = document.getElementById('scanBtn');
+      const scanStatus = document.getElementById('scanStatus');
+      scanBtn.textContent = '⏳ 読み取り中...';
+      scanBtn.disabled = true;
+      scanBtn.classList.add('scanning');
+      scanStatus.textContent = '読み取り中...';
+      scanStatus.style.color = '#ef4444';
+
+      scanTimeout = setTimeout(() => {
+        if (isScanning) {
+          isScanning = false;
+          scanBtn.textContent = '📷 読み取る';
+          scanBtn.disabled = false;
+          scanBtn.classList.remove('scanning');
+          scanStatus.textContent = '⏱ タイムアウト';
+          scanStatus.style.color = '#ef4444';
+          showToastError('scanError', '読み取りタイムアウト');
         }
-        // 名前をつける（ファイル名から拡張子除去）
-        let name = file.name.replace(/\.[^.]+$/, '');
-        // 重複したら連番
-        let baseName = name;
-        let idx = 1;
-        while (allConfigs.some(c => c.name === name)) {
-          name = baseName + '_' + idx;
-          idx++;
+      }, 5000);
+
+      const tempScanner = new Html5Qrcode("reader");
+      tempScanner.start({ facingMode: "environment" }, { fps: 15, qrbox: { width: 200, height: 100 }, aspectRatio: 1.0 },
+        (decodedText) => {
+          clearTimeout(scanTimeout);
+          isScanning = false;
+          scanBtn.textContent = '📷 読み取る';
+          scanBtn.disabled = false;
+          scanBtn.classList.remove('scanning');
+          scanStatus.textContent = '✅ 読み取り完了';
+          scanStatus.style.color = '#10b981';
+          playBeep(1200, 80);
+
+          addToCart(decodedText);
+
+          tempScanner.stop().then(() => tempScanner.clear()).catch(() => {});
+        },
+        () => {}
+      ).catch(() => {
+        clearTimeout(scanTimeout);
+        isScanning = false;
+        scanBtn.textContent = '📷 読み取る';
+        scanBtn.disabled = false;
+        scanBtn.classList.remove('scanning');
+        scanStatus.textContent = '❌ エラー';
+        scanStatus.style.color = '#ef4444';
+        showToastError('scanError', 'スキャン開始エラー');
+      });
+
+      setTimeout(() => {
+        if (isScanning) {
+          tempScanner.stop().then(() => tempScanner.clear()).catch(() => {});
         }
-        allConfigs.push({ name, data });
-        saveConfigsToStorage();
-        updateConfigSelect();
-        // 自動で選択
-        document.getElementById('configSelect').value = name;
-        loadConfigByName(name);
-        playBeep(1000, 100);
-        alert(`「${name}」を読み込みました`);
-      } catch(err) {
-        alert('JSONの解析に失敗しました: ' + err.message);
-      }
-    };
-    reader.readAsText(file);
-  }
-  // リセット（同じファイルを再度選べるように）
-  e.target.value = '';
-});
-
-// ドロップダウン切り替え
-document.getElementById('configSelect').addEventListener('change', function() {
-  if (this.value) {
-    loadConfigByName(this.value);
-  } else {
-    currentConfig = null;
-  }
-});
-
-// 「ファイルを追加」エリアをクリックでファイル選択
-document.getElementById('fileUploadArea').addEventListener('click', function() {
-  document.getElementById('fileInput').click();
-});
-
-// ----- ページ切り替え -----
-function showPage(pageId) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  const target = document.getElementById(pageId);
-  if (target) target.classList.add('active');
-  // カメラ停止処理は各ページで個別に行う
-}
-
-// ----- カート操作 -----
-function addToCart(barcode) {
-  if (!currentConfig) {
-    showToastError('scanError', '設定が読み込まれていません');
-    return false;
-  }
-  const product = currentConfig.products[barcode];
-  if (!product) {
-    showToastError('scanError', `コード「${barcode}」は未登録です`);
-    playBeep(300, 200);
-    return false;
-  }
-  if (cart[barcode]) {
-    cart[barcode].quantity += 1;
-  } else {
-    cart[barcode] = { name: product.name, price: product.price, quantity: 1 };
-  }
-  updateCartDisplay();
-  playBeep(1200, 80);
-  return true;
-}
-
-function updateCartDisplay() {
-  const list = document.getElementById('scanList');
-  let html = '';
-  let total = 0;
-  let count = 0;
-  for (const code in cart) {
-    const item = cart[code];
-    total += item.price * item.quantity;
-    count += item.quantity;
-    html += `<div class="scan-item">
-      <span class="sname">${item.name}</span>
-      <span class="sprice">${item.price}円 × ${item.quantity}</span>
-    </div>`;
-  }
-  if (!html) html = '<div class="empty">商品をスキャンするとここに表示されます</div>';
-  list.innerHTML = html;
-  document.getElementById('scanCount').textContent = count + '点';
-  document.getElementById('scanTotalPrice').textContent = total + ' 円';
-  totalAmount = total;
-  totalItems = count;
-}
-
-function clearCart() {
-  cart = {};
-  updateCartDisplay();
-}
-
-// エラーメッセージ表示（指定IDの要素）
-function showToastError(id, msg) {
-  const el = document.getElementById(id);
-  if (el) {
-    el.textContent = msg;
-    el.style.display = 'block';
-    setTimeout(() => { el.style.display = 'none'; }, 3000);
-  }
-}
-
-// ----- スキャン画面（バーコード） -----
-let html5QrCode = null;
-
-function startBarcodeScanner() {
-  const readerDiv = document.getElementById('reader');
-  if (html5QrCode) {
-    html5QrCode.stop().then(() => {
-      html5QrCode.clear();
-    }).catch(() => {});
-    html5QrCode = null;
-  }
-  // インスタンス作成
-  html5QrCode = new Html5Qrcode("reader");
-  const config = {
-    fps: 15,
-    qrbox: { width: 200, height: 100 },
-    aspectRatio: 1.0
-  };
-  html5QrCode.start(
-    { facingMode: "environment" },
-    config,
-    onScanSuccess,
-    onScanError
-  );
-}
-
-function onScanSuccess(decodedText, decodedResult) {
-  // バーコード読み取り成功
-  addToCart(decodedText);
-}
-
-function onScanError(err) {
-  // エラーは無視（連続スキャン中に頻繁に出る）
-}
-
-function stopBarcodeScanner() {
-  if (html5QrCode) {
-    html5QrCode.stop().then(() => {
-      html5QrCode.clear();
-    }).catch(() => {});
-    html5QrCode = null;
-  }
-}
-
-// ----- QR決済スキャン -----
-let qrScanner = null;
-
-function startQRScanner() {
-  const readerDiv = document.getElementById('qr-reader');
-  if (qrScanner) {
-    qrScanner.stop().then(() => {
-      qrScanner.clear();
-    }).catch(() => {});
-    qrScanner = null;
-  }
-  qrScanner = new Html5Qrcode("qr-reader");
-  const config = {
-    fps: 15,
-    qrbox: { width: 200, height: 200 },
-    aspectRatio: 1.0
-  };
-  qrScanner.start(
-    { facingMode: "environment" },
-    config,
-    onQRSuccess,
-    onQRScanError
-  );
-}
-
-function onQRSuccess(decodedText, decodedResult) {
-  // QRコードの中身（文字列）を取得
-  if (!currentConfig || !currentConfig.qrPayments) {
-    document.getElementById('qrResult').textContent = '⚠️ QR設定がありません';
-    return;
-  }
-  // 登録されたQRの中から一致するものを探す
-  let found = null;
-  for (const [key, name] of Object.entries(currentConfig.qrPayments)) {
-    if (decodedText.includes(key) || key === decodedText) {
-      found = name;
-      break;
+      }, 6000);
     }
-  }
-  if (!found) {
-    // 厳密一致しなくても、登録名のいずれかが含まれていればOKとする
-    for (const name of Object.values(currentConfig.qrPayments)) {
-      if (decodedText.includes(name)) {
-        found = name;
-        break;
+
+    // ----- QR決済用カメラ -----
+    let qrScanner = null;
+    let qrIsScanning = false;
+    let qrScanTimeout = null;
+
+    function startQRCamera() {
+      if (qrScanner) return;
+      qrScanner = new Html5Qrcode("qr-reader");
+      const config = { fps: 15, qrbox: { width: 200, height: 200 }, aspectRatio: 1.0 };
+      qrScanner.start({ facingMode: "environment" }, config, () => {}, () => {})
+        .catch(err => {
+          console.warn('QRカメラ起動エラー:', err);
+        });
+    }
+
+    function stopQRCamera() {
+      if (qrScanner) {
+        qrScanner.stop().then(() => {
+          qrScanner.clear();
+          qrScanner = null;
+        }).catch(() => {});
       }
     }
-  }
-  if (found) {
-    document.getElementById('qrResult').textContent = `✅ ${found} で決済されました`;
-    qrScanned = true;
-    document.getElementById('qrInserted').textContent = totalAmount;
-    document.getElementById('qrNextBtn').disabled = false;
-    playBeep(1400, 150);
-    // スキャン停止
-    if (qrScanner) {
-      qrScanner.stop().then(() => qrScanner.clear()).catch(() => {});
-      qrScanner = null;
+
+    function performQRScan() {
+      if (qrIsScanning) return;
+      if (!qrScanner) {
+        alert('カメラが起動していません');
+        return;
+      }
+
+      qrIsScanning = true;
+      const btn = document.getElementById('qrScanBtn');
+      const status = document.getElementById('qrStatus');
+      btn.textContent = '⏳ 読み取り中...';
+      btn.disabled = true;
+      btn.classList.add('scanning');
+      status.textContent = '読み取り中...';
+      status.style.color = '#ef4444';
+
+      qrScanTimeout = setTimeout(() => {
+        if (qrIsScanning) {
+          qrIsScanning = false;
+          btn.textContent = '📷 読み取る';
+          btn.disabled = false;
+          btn.classList.remove('scanning');
+          status.textContent = '⏱ タイムアウト';
+          status.style.color = '#ef4444';
+        }
+      }, 5000);
+
+      const tempScanner = new Html5Qrcode("qr-reader");
+      tempScanner.start({ facingMode: "environment" }, { fps: 15, qrbox: { width: 200, height: 200 }, aspectRatio: 1.0 },
+        (decodedText) => {
+          clearTimeout(qrScanTimeout);
+          qrIsScanning = false;
+          btn.textContent = '📷 読み取る';
+          btn.disabled = false;
+          btn.classList.remove('scanning');
+          status.textContent = '✅ 読み取り完了';
+          status.style.color = '#10b981';
+          playBeep(1200, 80);
+
+          // QR決済処理
+          processQRPayment(decodedText);
+
+          tempScanner.stop().then(() => tempScanner.clear()).catch(() => {});
+        },
+        () => {}
+      ).catch(() => {
+        clearTimeout(qrScanTimeout);
+        qrIsScanning = false;
+        btn.textContent = '📷 読み取る';
+        btn.disabled = false;
+        btn.classList.remove('scanning');
+        status.textContent = '❌ エラー';
+        status.style.color = '#ef4444';
+      });
+
+      setTimeout(() => {
+        if (qrIsScanning) {
+          tempScanner.stop().then(() => tempScanner.clear()).catch(() => {});
+        }
+      }, 6000);
     }
-  } else {
-    document.getElementById('qrResult').textContent = `⚠️ 未登録のQRです (${decodedText})`;
-    playBeep(300, 200);
-  }
-}
 
-function onQRScanError(err) {
-  // 無視
-}
-
-function stopQRScanner() {
-  if (qrScanner) {
-    qrScanner.stop().then(() => {
-      qrScanner.clear();
-    }).catch(() => {});
-    qrScanner = null;
-  }
-}
-
-// ----- 現金関連 -----
-function renderCashWallet() {
-  const container = document.getElementById('cashWallet');
-  let html = '';
-  for (const d of DENOMINATIONS) {
-    const count = cashWallet[d.value] || 0;
-    if (count > 0) {
-      html += `<div class="money-item" draggable="true" data-value="${d.value}" data-file="${d.file}">
-        <img src="${d.file}" alt="${d.label}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2244%22 height=%2230%22%3E%3Crect width=%2244%22 height=%2230%22 fill=%22%23e2e8f0%22/%3E%3Ctext x=%222%22 y=%2220%22 font-size=%2212%22 fill=%22%23475569%22%3E${d.label}%3C/text%3E%3C/svg%3E'">
-        <span class="mcount">×${count}</span>
-      </div>`;
-    }
-  }
-  if (!html) html = '<div style="color:#94a3b8; padding:12px;">財布が空です</div>';
-  container.innerHTML = html;
-  // ドラッグイベント設定
-  container.querySelectorAll('.money-item').forEach(el => {
-    el.addEventListener('dragstart', onDragStart);
-    el.addEventListener('touchstart', onTouchStart, { passive: true });
-  });
-}
-
-// ドラッグ＆ドロップ（現金）
-let dragData = null;
-
-function onDragStart(e) {
-  const val = parseInt(e.target.dataset.value);
-  if (isNaN(val)) return;
-  const file = e.target.dataset.file;
-  dragData = { value: val, file: file };
-  e.dataTransfer.setData('text/plain', JSON.stringify(dragData));
-  e.dataTransfer.effectAllowed = 'copy';
-}
-
-// タッチ対応（簡易：タップで投入）
-function onTouchStart(e) {
-  const el = e.currentTarget;
-  const val = parseInt(el.dataset.value);
-  if (isNaN(val)) return;
-  const file = el.dataset.file;
-  insertMoney(val, file);
-}
-
-// ドロップゾーン設定
-const dropZone = document.getElementById('dropZone');
-dropZone.addEventListener('dragover', (e) => {
-  e.preventDefault();
-  e.dataTransfer.dropEffect = 'copy';
-  dropZone.classList.add('dragover');
-});
-dropZone.addEventListener('dragleave', () => {
-  dropZone.classList.remove('dragover');
-});
-dropZone.addEventListener('drop', (e) => {
-  e.preventDefault();
-  dropZone.classList.remove('dragover');
-  try {
-    const data = JSON.parse(e.dataTransfer.getData('text/plain'));
-    insertMoney(data.value, data.file);
-  } catch {
-    // 無視
-  }
-});
-
-// お金投入処理
-function insertMoney(value, file) {
-  if (cashWallet[value] <= 0) {
-    showToastError('cashError', 'そのお金はありません');
-    return;
-  }
-  // 財布から減らす
-  cashWallet[value] -= 1;
-  insertedCash += value;
-  // ドロップゾーンに表示
-  updateDropZone();
-  updateCashDisplay();
-  renderCashWallet();
-  playBeep(1000, 60);
-
-  // 投入額が購入額以上になったら自動でおつり計算
-  if (insertedCash >= totalAmount) {
-    setTimeout(() => {
-      calculateChange();
-    }, 300);
-  }
-}
-
-function updateDropZone() {
-  const zone = document.getElementById('dropZone');
-  // 今投入されているお金を表示（簡易的に）
-  const hint = document.getElementById('dropHint');
-  if (insertedCash > 0) {
-    hint.textContent = `投入中：${insertedCash.toLocaleString()} 円`;
-  } else {
-    hint.textContent = 'ここにドラッグ＆ドロップ';
-  }
-}
-
-function updateCashDisplay() {
-  document.getElementById('cashInserted').textContent = insertedCash;
-  document.getElementById('cashPurchase').textContent = totalAmount;
-}
-
-// おつり計算（小銭優先）
-function calculateChange() {
-  if (insertedCash < totalAmount) return;
-  const change = insertedCash - totalAmount;
-  if (change === 0) {
-    // ぴったりの場合
-    showToastError('cashError', '✅ ぴったりです！');
-    playBeep(1400, 100);
-    document.getElementById('cashNextBtn').disabled = false;
-    return;
-  }
-  // おつりを小銭優先で計算
-  let remaining = change;
-  // 財布に戻す（小銭優先：1円→5円→10円→50円→100円→500円→1000円→5000円→10000円の順）
-  // ただし、財布に戻す際は手持ちの金種を使っておつりを構成（実際のレジのように）
-  // ここでは単純に、財布に在庫があれば優先的に小銭で戻す
-  const sorted = [...DENOMINATIONS].sort((a,b) => a.value - b.value); // 小さい順
-  let changeBreakdown = [];
-  for (const d of sorted) {
-    if (remaining <= 0) break;
-    const count = Math.min(Math.floor(remaining / d.value), cashWallet[d.value] || 0);
-    if (count > 0) {
-      changeBreakdown.push({ value: d.value, count });
-      remaining -= count * d.value;
-    }
-  }
-  // もし残ったら（手持ちが足りない場合）大きなお金で調整（実際はありえないが）
-  if (remaining > 0) {
-    // 大きなお金で強制的に戻す（財布に追加）
-    for (const d of DENOMINATIONS.reverse()) {
-      if (remaining <= 0) break;
-      if (d.value <= remaining) {
-        const count = Math.floor(remaining / d.value);
-        changeBreakdown.push({ value: d.value, count });
-        remaining -= count * d.value;
+    function processQRPayment(decodedText) {
+      if (!currentConfig || !currentConfig.qrPayments) {
+        document.getElementById('qrResult').textContent = '⚠️ QR設定がありません';
+        return;
+      }
+      let found = null;
+      for (const [key, name] of Object.entries(currentConfig.qrPayments)) {
+        if (decodedText.includes(key) || key === decodedText) {
+          found = name;
+          break;
+        }
+      }
+      if (!found) {
+        for (const name of Object.values(currentConfig.qrPayments)) {
+          if (decodedText.includes(name)) {
+            found = name;
+            break;
+          }
+        }
+      }
+      if (found) {
+        document.getElementById('qrResult').textContent = `✅ ${found} で決済されました`;
+        qrScanned = true;
+        document.getElementById('qrInserted').textContent = totalAmount;
+        document.getElementById('qrNextBtn').disabled = false;
+        playBeep(1400, 150);
+      } else {
+        document.getElementById('qrResult').textContent = `⚠️ 未登録のQRです (${decodedText})`;
+        playBeep(300, 200);
       }
     }
-  }
 
-  // 財布に戻す
-  for (const item of changeBreakdown) {
-    cashWallet[item.value] = (cashWallet[item.value] || 0) + item.count;
-  }
-  // 投入額をリセット
-  insertedCash = 0;
-  renderCashWallet();
-  updateDropZone();
-  updateCashDisplay();
-  // 完了メッセージ
-  const totalChange = change;
-  showToastError('cashError', `おつり ${totalChange.toLocaleString()} 円 を財布に戻しました`);
-  playBeep(1400, 150);
-  document.getElementById('cashNextBtn').disabled = false;
-}
+    // ----- 設定読み込み -----
+    function loadConfigsFromStorage() {
+      try {
+        const raw = localStorage.getItem('register_configs');
+        allConfigs = raw ? JSON.parse(raw) : [];
+      } catch { allConfigs = []; }
+    }
 
-// ----- カード関連 -----
-function renderCardWallet() {
-  const container = document.getElementById('cardWallet');
-  let html = '';
-  for (const card of CARDS) {
-    html += `<div class="card-item" draggable="true" data-cardid="${card.id}" data-file="${card.file}">
-      <img src="${card.file}" alt="${card.name}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2256%22 height=%2236%22%3E%3Crect width=%2256%22 height=%2236%22 fill=%22%23e2e8f0%22/%3E%3Ctext x=%222%22 y=%2220%22 font-size=%2212%22 fill=%22%23475569%22%3E${card.name}%3C/text%3E%3C/svg%3E'">
-      <span class="cname">${card.name}</span>
-    </div>`;
-  }
-  container.innerHTML = html;
-  // ドラッグイベント
-  container.querySelectorAll('.card-item').forEach(el => {
-    el.addEventListener('dragstart', onCardDragStart);
-    el.addEventListener('touchstart', onCardTouchStart, { passive: true });
-  });
-}
+    function saveConfigsToStorage() {
+      localStorage.setItem('register_configs', JSON.stringify(allConfigs));
+    }
 
-function onCardDragStart(e) {
-  const id = e.target.dataset.cardid;
-  const file = e.target.dataset.file;
-  e.dataTransfer.setData('text/plain', JSON.stringify({ cardId: id, file }));
-}
+    function loadConfigByName(name) {
+      const found = allConfigs.find(c => c.name === name);
+      if (found) { currentConfig = found.data; return true; }
+      return false;
+    }
 
-function onCardTouchStart(e) {
-  const el = e.currentTarget;
-  const id = el.dataset.cardid;
-  const file = el.dataset.file;
-  insertCard(id, file);
-}
+    function updateConfigSelect() {
+      const sel = document.getElementById('configSelect');
+      const currentVal = sel.value;
+      sel.innerHTML = '<option value="">-- 設定を選択 --</option>';
+      for (const c of allConfigs) {
+        const opt = document.createElement('option');
+        opt.value = c.name;
+        opt.textContent = c.name;
+        sel.appendChild(opt);
+      }
+      if (currentVal && allConfigs.some(c => c.name === currentVal)) {
+        sel.value = currentVal;
+      } else if (allConfigs.length > 0) {
+        sel.value = allConfigs[0].name;
+      }
+      if (sel.value) loadConfigByName(sel.value);
+      else currentConfig = null;
+    }
 
-// カードドロップゾーン
-const cardDropZone = document.getElementById('cardDropZone');
-cardDropZone.addEventListener('dragover', (e) => {
-  e.preventDefault();
-  e.dataTransfer.dropEffect = 'copy';
-  cardDropZone.classList.add('dragover');
-});
-cardDropZone.addEventListener('dragleave', () => {
-  cardDropZone.classList.remove('dragover');
-});
-cardDropZone.addEventListener('drop', (e) => {
-  e.preventDefault();
-  cardDropZone.classList.remove('dragover');
-  try {
-    const data = JSON.parse(e.dataTransfer.getData('text/plain'));
-    insertCard(data.cardId, data.file);
-  } catch {}
-});
+    // ----- ファイルアップロード -----
+    document.getElementById('fileInput').addEventListener('change', function(e) {
+      const files = e.target.files;
+      for (const file of files) {
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+          try {
+            const data = JSON.parse(ev.target.result);
+            if (!data.products || typeof data.products !== 'object') {
+              alert('商品データが正しくありません（"products" オブジェクトが必要です）');
+              return;
+            }
+            let name = file.name.replace(/\.[^.]+$/, '');
+            let baseName = name;
+            let idx = 1;
+            while (allConfigs.some(c => c.name === name)) {
+              name = baseName + '_' + idx;
+              idx++;
+            }
+            allConfigs.push({ name, data });
+            saveConfigsToStorage();
+            updateConfigSelect();
+            document.getElementById('configSelect').value = name;
+            loadConfigByName(name);
+            playBeep(1000, 100);
+            alert(`「${name}」を読み込みました`);
+          } catch (err) {
+            alert('JSONの解析に失敗しました: ' + err.message);
+          }
+        };
+        reader.readAsText(file);
+      }
+      e.target.value = '';
+    });
 
-function insertCard(cardId, file) {
-  if (cardInserted) {
-    showToastError('cashError', 'すでにカードが差し込まれています');
-    return;
-  }
-  cardInserted = true;
-  document.getElementById('cardDropHint').textContent = '✅ カード差し込み中...';
-  playBeep(1000, 80);
-  // スピナー表示 & 3秒待機
-  const spinner = document.getElementById('cardSpinner');
-  spinner.classList.add('show');
-  document.getElementById('cardStatus').textContent = '⏳ 認証中...';
-  setTimeout(() => {
-    spinner.classList.remove('show');
-    document.getElementById('cardStatus').textContent = '✅ 決済完了';
-    document.getElementById('cardInserted').textContent = totalAmount;
-    document.getElementById('cardNextBtn').disabled = false;
-    playBeep(1400, 200);
-    // カードを戻す（簡易的にリセット）
-    cardInserted = false;
-    document.getElementById('cardDropHint').textContent = 'ここにカードをドラッグ';
-    // カードは元に戻す（画面上で在庫復活はなし、カードは無限にある想定）
-  }, 3000);
-}
+    document.getElementById('fileUploadArea').addEventListener('click', function() {
+      document.getElementById('fileInput').click();
+    });
 
-// ----- レシート／領収書生成 -----
-function generateReceipt() {
-  const storeName = currentConfig?.storeName || 'レジごっこマート';
-  const now = new Date();
-  const dateStr = now.toLocaleString('ja-JP');
-  let itemsHtml = '';
-  let total = 0;
-  for (const code in cart) {
-    const item = cart[code];
-    total += item.price * item.quantity;
-    itemsHtml += `<tr><td>${item.name}</td><td>${item.quantity}</td><td>${item.price}</td><td>${item.price * item.quantity}</td></tr>`;
-  }
-  const paymentMethod = lastPaymentMethod || '現金';
-  const inserted = lastInsertedAmount || total;
+    document.getElementById('configSelect').addEventListener('change', function() {
+      if (this.value) loadConfigByName(this.value);
+      else currentConfig = null;
+    });
 
-  return `
-    <html>
-    <head><meta charset="UTF-8"><title>レシート</title>
-    <style>
-      body { font-family: 'Courier New', monospace; padding: 20px; max-width: 320px; margin: 0 auto; background: #f9fafb; }
-      .receipt { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-      .store { font-size: 1.4rem; font-weight: bold; text-align: center; border-bottom: 2px dashed #ccc; padding-bottom: 8px; }
-      .detail { margin: 12px 0; }
-      table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-      th { text-align: left; border-bottom: 1px solid #ddd; padding: 4px 0; }
-      td { padding: 4px 0; }
-      .total { font-weight: bold; font-size: 1.2rem; text-align: right; border-top: 2px solid #333; padding-top: 8px; margin-top: 8px; }
-      .footer { text-align: center; font-size: 0.8rem; color: #64748b; margin-top: 16px; border-top: 1px dashed #ddd; padding-top: 8px; }
-    </style>
-    </head>
-    <body>
-    <div class="receipt">
-      <div class="store">${storeName}</div>
-      <div style="text-align:center;font-size:0.8rem;color:#64748b;">${dateStr}</div>
-      <div class="detail">
-        <table>
-          <tr><th>商品名</th><th>数</th><th>単価</th><th>小計</th></tr>
-          ${itemsHtml}
-        </table>
-      </div>
-      <div class="total">合計 ${total.toLocaleString()} 円</div>
-      <div style="display:flex;justify-content:space-between;font-size:0.9rem;padding:4px 0;">
-        <span>決済方法</span><span>${paymentMethod}</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;font-size:0.9rem;padding:4px 0;">
-        <span>お預かり</span><span>${inserted.toLocaleString()} 円</span>
-      </div>
-      <div class="footer">ご利用ありがとうございました</div>
-    </div>
-    </body>
-    </html>
-  `;
-}
+    // ----- ページ切り替え -----
+    function showPage(pageId) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      const target = document.getElementById(pageId);
+      if (target) target.classList.add('active');
+    }
 
-function generateInvoice() {
-  const storeName = currentConfig?.storeName || 'レジごっこマート';
-  const now = new Date();
-  const dateStr = now.toLocaleString('ja-JP');
-  const total = totalAmount || 0;
-  // ランダムな宛名
-  const names = ['山田太郎', '佐藤花子', '鈴木一郎', '高橋美咲', '田中健太', '伊藤綾乃', '渡辺浩司', '中村陽子'];
-  const name = names[Math.floor(Math.random() * names.length)];
+    // ----- カート操作 -----
+    function addToCart(barcode) {
+      if (!currentConfig) {
+        showToastError('scanError', '設定が読み込まれていません');
+        return;
+      }
+      const product = currentConfig.products[barcode];
+      if (!product) {
+        showToastError('scanError', `コード「${barcode}」は未登録です`);
+        playBeep(300, 200);
+        return;
+      }
+      if (cart[barcode]) {
+        cart[barcode].quantity += 1;
+      } else {
+        cart[barcode] = { name: product.name, price: product.price, quantity: 1 };
+      }
+      updateCartDisplay();
+      playBeep(1200, 80);
+    }
 
-  return `
-    <html>
-    <head><meta charset="UTF-8"><title>領収書</title>
-    <style>
-      body { font-family: 'Courier New', monospace; padding: 20px; max-width: 380px; margin: 0 auto; background: #f9fafb; }
-      .invoice { background: white; padding: 24px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-      .title { font-size: 1.6rem; font-weight: bold; text-align: center; border-bottom: 3px double #333; padding-bottom: 8px; }
-      .store { text-align: center; font-size: 1.2rem; margin: 8px 0; }
-      .body { margin: 16px 0; }
-      .row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px dotted #ddd; }
-      .total { font-weight: bold; font-size: 1.4rem; text-align: right; border-top: 2px solid #333; padding-top: 8px; margin-top: 8px; }
-      .footer { text-align: center; font-size: 0.8rem; color: #64748b; margin-top: 16px; }
-    </style>
-    </head>
-    <body>
-    <div class="invoice">
-      <div class="title">領 収 書</div>
-      <div class="store">${storeName}</div>
-      <div style="text-align:center;font-size:0.8rem;color:#64748b;">${dateStr}</div>
-      <div class="body">
-        <div class="row"><span>宛名</span><span>${name} 様</span></div>
-        <div class="row"><span>但し</span><span>商品代金として</span></div>
-        <div class="row"><span>決済方法</span><span>${lastPaymentMethod || '現金'}</span></div>
-      </div>
-      <div class="total">¥${total.toLocaleString()}</div>
-      <div class="footer">上記正に領収いたしました</div>
-    </div>
-    </body>
-    </html>
-  `;
-}
+    function updateCartDisplay() {
+      const list = document.getElementById('scanList');
+      let html = '';
+      let total = 0;
+      let count = 0;
+      for (const code in cart) {
+        const item = cart[code];
+        total += item.price * item.quantity;
+        count += item.quantity;
+        html += `<div class="scan-item">
+            <span class="sname">${item.name}</span>
+            <span class="sprice">${item.price}円 × ${item.quantity}</span>
+          </div>`;
+      }
+      if (!html) html = '<div class="empty">商品をスキャンするとここに表示されます</div>';
+      list.innerHTML = html;
+      document.getElementById('scanCount').textContent = count + '点';
+      document.getElementById('scanTotalPrice').textContent = total + ' 円';
+      totalAmount = total;
+      totalItems = count;
+    }
 
-// ----- 画面遷移フロー -----
-// 1. 初期画面 → スキャン
-document.getElementById('startBtn').addEventListener('click', function() {
-  const sel = document.getElementById('configSelect');
-  if (!sel.value || !currentConfig) {
-    alert('先に商品データを読み込んでください');
-    return;
-  }
-  clearCart();
-  insertedCash = 0;
-  cardInserted = false;
-  qrScanned = false;
-  document.getElementById('cashNextBtn').disabled = true;
-  document.getElementById('cardNextBtn').disabled = true;
-  document.getElementById('qrNextBtn').disabled = true;
-  document.getElementById('cashInserted').textContent = '0';
-  document.getElementById('cashPurchase').textContent = totalAmount;
-  document.getElementById('cardPurchase').textContent = totalAmount;
-  document.getElementById('cardInserted').textContent = '0';
-  document.getElementById('qrPurchase').textContent = totalAmount;
-  document.getElementById('qrInserted').textContent = '0';
-  document.getElementById('qrResult').textContent = '';
-  document.getElementById('cardStatus').textContent = '';
-  document.getElementById('cardSpinner').classList.remove('show');
-  document.getElementById('dropHint').textContent = 'ここにドラッグ＆ドロップ';
-  document.getElementById('cardDropHint').textContent = 'ここにカードをドラッグ';
-  // カメラ開始
-  showPage('page-scan');
-  setTimeout(() => {
-    startBarcodeScanner();
-  }, 300);
-  initCashWallet();
-  renderCashWallet();
-  renderCardWallet();
-  updateCartDisplay();
-  updateCashDisplay();
-});
+    function clearCart() {
+      cart = {};
+      updateCartDisplay();
+    }
 
-// スキャン画面「次へ」
-document.getElementById('scanNextBtn').addEventListener('click', function() {
-  if (Object.keys(cart).length === 0) {
-    showToastError('scanError', '商品をスキャンしてください');
-    return;
-  }
-  stopBarcodeScanner();
-  lastPaymentMethod = '';
-  lastInsertedAmount = 0;
-  showPage('page-payment');
-});
+    function showToastError(id, msg) {
+      const el = document.getElementById(id);
+      if (el) {
+        el.textContent = msg;
+        el.style.display = 'block';
+        setTimeout(() => { el.style.display = 'none'; }, 3000);
+      }
+    }
 
-// 支払い方法選択
-document.getElementById('payCashBtn').addEventListener('click', function() {
-  lastPaymentMethod = '現金';
-  insertedCash = 0;
-  document.getElementById('cashInserted').textContent = '0';
-  document.getElementById('cashPurchase').textContent = totalAmount;
-  document.getElementById('cashNextBtn').disabled = true;
-  document.getElementById('dropHint').textContent = 'ここにドラッグ＆ドロップ';
-  initCashWallet();
-  renderCashWallet();
-  showPage('page-cash');
-});
+    // ----- 現金関連 -----
+    function initCashWallet() {
+      cashWallet = {};
+      for (const d of DENOMINATIONS) {
+        let init = 0;
+        if (d.value >= 1000 || d.value === 500) init = 2;
+        else if (d.value === 100) init = 7;
+        else if (d.value === 50) init = 5;
+        else init = 10;
+        cashWallet[d.value] = init;
+      }
+    }
 
-document.getElementById('payCardBtn').addEventListener('click', function() {
-  lastPaymentMethod = 'クレジットカード';
-  cardInserted = false;
-  document.getElementById('cardInserted').textContent = '0';
-  document.getElementById('cardPurchase').textContent = totalAmount;
-  document.getElementById('cardNextBtn').disabled = true;
-  document.getElementById('cardStatus').textContent = '';
-  document.getElementById('cardSpinner').classList.remove('show');
-  document.getElementById('cardDropHint').textContent = 'ここにカードをドラッグ';
-  renderCardWallet();
-  showPage('page-card');
-});
+    function renderCashWallet() {
+      const container = document.getElementById('cashWallet');
+      let html = '';
+      for (const d of DENOMINATIONS) {
+        const count = cashWallet[d.value] || 0;
+        if (count > 0) {
+          html += `<div class="money-item" draggable="true" data-value="${d.value}" data-file="${d.file}">
+              <img src="${d.file}" alt="${d.label}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2238%22 height=%2226%22%3E%3Crect width=%2238%22 height=%2226%22 fill=%22%23e2e8f0%22/%3E%3Ctext x=%222%22 y=%2218%22 font-size=%2210%22 fill=%22%23475569%22%3E${d.label}%3C/text%3E%3C/svg%3E'">
+              <span class="mcount">×${count}</span>
+            </div>`;
+        }
+      }
+      if (!html) html = '<div style="color:#94a3b8; padding:8px;">財布が空です</div>';
+      container.innerHTML = html;
+      container.querySelectorAll('.money-item').forEach(el => {
+        el.addEventListener('dragstart', onDragStart);
+        el.addEventListener('touchstart', onTouchStart, { passive: true });
+      });
+    }
 
-document.getElementById('payQRBtn').addEventListener('click', function() {
-  lastPaymentMethod = 'QR決済';
-  qrScanned = false;
-  document.getElementById('qrInserted').textContent = '0';
-  document.getElementById('qrPurchase').textContent = totalAmount;
-  document.getElementById('qrNextBtn').disabled = true;
-  document.getElementById('qrResult').textContent = '';
-  showPage('page-qr');
-  setTimeout(() => {
-    startQRScanner();
-  }, 400);
-});
+    let dragData = null;
 
-// 現金「次へ」
-document.getElementById('cashNextBtn').addEventListener('click', function() {
-  if (insertedCash < totalAmount) {
-    showToastError('cashError', 'お金が不足しています');
-    return;
-  }
-  lastInsertedAmount = insertedCash;
-  showPage('page-receipt');
-});
+    function onDragStart(e) {
+      const val = parseInt(e.target.dataset.value);
+      if (isNaN(val)) return;
+      const file = e.target.dataset.file;
+      dragData = { value: val, file: file };
+      e.dataTransfer.setData('text/plain', JSON.stringify(dragData));
+      e.dataTransfer.effectAllowed = 'copy';
+    }
 
-// カード「次へ」
-document.getElementById('cardNextBtn').addEventListener('click', function() {
-  lastInsertedAmount = totalAmount;
-  showPage('page-receipt');
-});
+    function onTouchStart(e) {
+      const el = e.currentTarget;
+      const val = parseInt(el.dataset.value);
+      if (isNaN(val)) return;
+      const file = el.dataset.file;
+      insertMoney(val, file);
+    }
 
-// QR「次へ」
-document.getElementById('qrNextBtn').addEventListener('click', function() {
-  if (!qrScanned) {
-    alert('QRを読み取ってください');
-    return;
-  }
-  lastInsertedAmount = totalAmount;
-  showPage('page-receipt');
-});
+    const dropZone = document.getElementById('dropZone');
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy';
+      dropZone.classList.add('dragover');
+    });
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('dragover');
+    });
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      try {
+        const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+        insertMoney(data.value, data.file);
+      } catch {}
+    });
 
-// レシート／領収書
-document.getElementById('receiptBtn').addEventListener('click', function() {
-  const html = generateReceipt();
-  const win = window.open('', '_blank');
-  if (win) {
-    win.document.write(html);
-    win.document.close();
-  }
-  finishTransaction();
-});
+    function insertMoney(value, file) {
+      if (cashWallet[value] <= 0) {
+        showToastError('cashError', 'そのお金はありません');
+        return;
+      }
+      cashWallet[value] -= 1;
+      insertedCash += value;
+      updateDropZone();
+      updateCashDisplay();
+      renderCashWallet();
+      playBeep(1000, 60);
 
-document.getElementById('invoiceBtn').addEventListener('click', function() {
-  const html = generateInvoice();
-  const win = window.open('', '_blank');
-  if (win) {
-    win.document.write(html);
-    win.document.close();
-  }
-  finishTransaction();
-});
+      if (insertedCash >= totalAmount) {
+        setTimeout(() => {
+          calculateChange();
+        }, 300);
+      }
+    }
 
-document.getElementById('noReceiptBtn').addEventListener('click', function() {
-  finishTransaction();
-});
+    function updateDropZone() {
+      const hint = document.getElementById('dropHint');
+      if (insertedCash > 0) {
+        hint.textContent = `投入中：${insertedCash.toLocaleString()} 円`;
+      } else {
+        hint.textContent = 'ここにドラッグ＆ドロップ（タップでも投入）';
+      }
+    }
 
-function finishTransaction() {
-  clearCart();
-  // 終了画面表示
-  showPage('page-end');
-  // 3秒後にホームへ
-  setTimeout(() => {
-    stopBarcodeScanner();
-    stopQRScanner();
-    showPage('page-home');
-  }, 3000);
-}
+    function updateCashDisplay() {
+      document.getElementById('cashInserted').textContent = insertedCash;
+      document.getElementById('cashPurchase').textContent = totalAmount;
+      document.getElementById('cashTotalDisplay').textContent = totalAmount + ' 円';
+    }
 
-// ----- 初期化 -----
-loadConfigsFromStorage();
-updateConfigSelect();
-if (allConfigs.length > 0) {
-  const first = allConfigs[0];
-  document.getElementById('configSelect').value = first.name;
-  loadConfigByName(first.name);
-}
-initCashWallet();
-renderCashWallet();
-renderCardWallet();
-updateCartDisplay();
+    function calculateChange() {
+      if (insertedCash < totalAmount) return;
+      const change = insertedCash - totalAmount;
+      if (change === 0) {
+        showToastError('cashError', '✅ ぴったりです！');
+        playBeep(1400, 100);
+        document.getElementById('cashNextBtn').disabled = false;
+        return;
+      }
+      let remaining = change;
+      const sorted = [...DENOMINATIONS].sort((a, b) => a.value - b.value);
+      let changeBreakdown = [];
+      for (const d of sorted) {
+        if (remaining <= 0) break;
+        const count = Math.min(Math.floor(remaining / d.value), cashWallet[d.value] || 0);
+        if (count > 0) {
+          changeBreakdown.push({ value: d.value, count });
+          remaining -= count * d.value;
+        }
+      }
+      if (remaining > 0) {
+        for (const d of DENOMINATIONS.reverse()) {
+          if (remaining <= 0) break;
+          if (d.value <= remaining) {
+            const count = Math.floor(remaining / d.value);
+            changeBreakdown.push({ value: d.value, count });
+            remaining -= count * d.value;
+          }
+        }
+      }
+      for (const item of changeBreakdown) {
+        cashWallet[item.value] = (cashWallet[item.value] || 0) + item.count;
+      }
+      insertedCash = 0;
+      renderCashWallet();
+      updateDropZone();
+      updateCashDisplay();
+      const totalChange = change;
+      showToastError('cashError', `おつり ${totalChange.toLocaleString()} 円 を財布に戻しました`);
+      playBeep(1400, 150);
+      document.getElementById('cashNextBtn').disabled = false;
+    }
 
-// 何かがうまくいかない場合のデバッグ用にコンソール出力
-console.log('レジごっこ起動完了！');
-</script>
+    // ----- カード関連 -----
+    function renderCardWallet() {
+      const container = document.getElementById('cardWallet');
+      let html = '';
+      for (const card of CARDS) {
+        html += `<div class="card-item" draggable="true" data-cardid="${card.id}" data-file="${card.file}">
+            <img src="${card.file}" alt="${card.name}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2248%22 height=%2230%22%3E%3Crect width=%2248%22 height=%2230%22 fill=%22%23e2e8f0%22/%3E%3Ctext x=%222%22 y=%2220%22 font-size=%2210%22 fill=%22%23475569%22%3E${card.name}%3C/text%3E%3C/svg%3E'">
+            <span class="cname">${card.name}</span>
+          </div>`;
+      }
+      container.innerHTML = html;
+      container.querySelectorAll('.card-item').forEach(el => {
+        el.addEventListener('dragstart', onCardDragStart);
+        el.addEventListener('touchstart', onCardTouchStart, { passive: true });
+      });
+    }
+
+    function onCardDragStart(e) {
+      const id = e.target.dataset.cardid;
+      const file = e.target.dataset.file;
+      e.dataTransfer.setData('text/plain', JSON.stringify({ cardId: id, file }));
+    }
+
+    function onCardTouchStart(e) {
+      const el = e.currentTarget;
+      const id = el.dataset.cardid;
+      const file = el.dataset.file;
+      insertCard(id, file);
+    }
+
+    const cardDropZone = document.getElementById('cardDropZone');
+    cardDropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy';
+      cardDropZone.classList.add('dragover');
+    });
+    cardDropZone.addEventListener('dragleave', () => {
+      cardDropZone.classList.remove('dragover');
+    });
+    cardDropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      cardDropZone.classList.remove('dragover');
+      try {
+        const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+        insertCard(data.cardId, data.file);
+      } catch {}
+    });
+
+    function insertCard(cardId, file) {
+      if (cardInserted) {
+        showToastError('cashError', 'すでにカードが差し込まれています');
+        return;
+      }
+      cardInserted = true;
+      document.getElementById('cardDropHint').textContent = '✅ カード差し込み中...';
+      playBeep(1000, 80);
+      const spinner = document.getElementById('cardSpinner');
+      spinner.classList.add('show');
+      document.getElementById('cardStatus').textContent = '⏳ 認証中...';
+      setTimeout(() => {
+        spinner.classList.remove('show');
+        document.getElementById('cardStatus').textContent = '✅ 決済完了';
+        document.getElementById('cardInserted').textContent = totalAmount;
+        document.getElementById('cardNextBtn').disabled = false;
+        playBeep(1400, 200);
+        cardInserted = false;
+        document.getElementById('cardDropHint').textContent = 'ここにカードをドラッグ（タップでも投入）';
+      }, 3000);
+    }
+
+    // ----- レシート／領収書 -----
+    function generateReceipt() {
+      const storeName = currentConfig?.storeName || 'レジごっこマート';
+      const now = new Date();
+      const dateStr = now.toLocaleString('ja-JP');
+      let itemsHtml = '';
+      let total = 0;
+      for (const code in cart) {
+        const item = cart[code];
+        total += item.price * item.quantity;
+        itemsHtml += `<tr><td>${item.name}</td><td>${item.quantity}</td><td>${item.price}</td><td>${item.price * item.quantity}</td></tr>`;
+      }
+      const paymentMethod = lastPaymentMethod || '現金';
+      const inserted = lastInsertedAmount || total;
+      return `
+        <html>
+        <head><meta charset="UTF-8"><title>レシート</title>
+        <style>
+          body { font-family: 'Courier New', monospace; padding: 20px; max-width: 320px; margin: 0 auto; background: #f9fafb; }
+          .receipt { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+          .store { font-size: 1.4rem; font-weight: bold; text-align: center; border-bottom: 2px dashed #ccc; padding-bottom: 8px; }
+          .detail { margin: 12px 0; }
+          table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+          th { text-align: left; border-bottom: 1px solid #ddd; padding: 4px 0; }
+          td { padding: 4px 0; }
+          .total { font-weight: bold; font-size: 1.2rem; text-align: right; border-top: 2px solid #333; padding-top: 8px; margin-top: 8px; }
+          .footer { text-align: center; font-size: 0.8rem; color: #64748b; margin-top: 16px; border-top: 1px dashed #ddd; padding-top: 8px; }
+        </style>
+        </head>
+        <body>
+        <div class="receipt">
+          <div class="store">${storeName}</div>
+          <div style="text-align:center;font-size:0.8rem;color:#64748b;">${dateStr}</div>
+          <div class="detail">
+            <table>
+              <tr><th>商品名</th><th>数</th><th>単価</th><th>小計</th></tr>
+              ${itemsHtml}
+            </table>
+          </div>
+          <div class="total">合計 ${total.toLocaleString()} 円</div>
+          <div style="display:flex;justify-content:space-between;font-size:0.9rem;padding:4px 0;">
+            <span>決済方法</span><span>${paymentMethod}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:0.9rem;padding:4px 0;">
+            <span>お預かり</span><span>${inserted.toLocaleString()} 円</span>
+          </div>
+          <div class="footer">ご利用ありがとうございました</div>
+        </div>
+        </body>
+        </html>
+      `;
+    }
+
+    function generateInvoice() {
+      const storeName = currentConfig?.storeName || 'レジごっこマート';
+      const now = new Date();
+      const dateStr = now.toLocaleString('ja-JP');
+      const total = totalAmount || 0;
+      const names = ['山田太郎', '佐藤花子', '鈴木一郎', '高橋美咲', '田中健太', '伊藤綾乃', '渡辺浩司', '中村陽子'];
+      const name = names[Math.floor(Math.random() * names.length)];
+      return `
+        <html>
+        <head><meta charset="UTF-8"><title>領収書</title>
+        <style>
+          body { font-family: 'Courier New', monospace; padding: 20px; max-width: 380px; margin: 0 auto; background: #f9fafb; }
+          .invoice { background: white; padding: 24px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+          .title { font-size: 1.6rem; font-weight: bold; text-align: center; border-bottom: 3px double #333; padding-bottom: 8px; }
+          .store { text-align: center; font-size: 1.2rem; margin: 8px 0; }
+          .body { margin: 16px 0; }
+          .row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px dotted #ddd; }
+          .total { font-weight: bold; font-size: 1.4rem; text-align: right; border-top: 2px solid #333; padding-top: 8px; margin-top: 8px; }
+          .footer { text-align: center; font-size: 0.8rem; color: #64748b; margin-top: 16px; }
+        </style>
+        </head>
+        <body>
+        <div class="invoice">
+          <div class="title">領 収 書</div>
+          <div class="store">${storeName}</div>
+          <div style="text-align:center;font-size:0.8rem;color:#64748b;">${dateStr}</div>
+          <div class="body">
+            <div class="row"><span>宛名</span><span>${name} 様</span></div>
+            <div class="row"><span>但し</span><span>商品代金として</span></div>
+            <div class="row"><span>決済方法</span><span>${lastPaymentMethod || '現金'}</span></div>
+          </div>
+          <div class="total">¥${total.toLocaleString()}</div>
+          <div class="footer">上記正に領収いたしました</div>
+        </div>
+        </body>
+        </html>
+      `;
+    }
+
+    // ----- 画面遷移フロー -----
+    document.getElementById('startBtn').addEventListener('click', function() {
+      const sel = document.getElementById('configSelect');
+      if (!sel.value || !currentConfig) {
+        alert('先に商品データを読み込んでください');
+        return;
+      }
+      clearCart();
+      insertedCash = 0;
+      cardInserted = false;
+      qrScanned = false;
+      document.getElementById('cashNextBtn').disabled = true;
+      document.getElementById('cardNextBtn').disabled = true;
+      document.getElementById('qrNextBtn').disabled = true;
+      document.getElementById('cashInserted').textContent = '0';
+      document.getElementById('cashPurchase').textContent = totalAmount;
+      document.getElementById('cardPurchase').textContent = totalAmount;
+      document.getElementById('cardInserted').textContent = '0';
+      document.getElementById('qrPurchase').textContent = totalAmount;
+      document.getElementById('qrInserted').textContent = '0';
+      document.getElementById('qrResult').textContent = '';
+      document.getElementById('cardStatus').textContent = '';
+      document.getElementById('cardSpinner').classList.remove('show');
+      document.getElementById('dropHint').textContent = 'ここにドラッグ＆ドロップ（タップでも投入）';
+      document.getElementById('cardDropHint').textContent = 'ここにカードをドラッグ（タップでも投入）';
+      document.getElementById('scanStatus').textContent = '待機中';
+      document.getElementById('scanStatus').style.color = '#64748b';
+      document.getElementById('scanBtn').textContent = '📷 読み取る';
+      document.getElementById('scanBtn').disabled = false;
+      document.getElementById('scanBtn').classList.remove('scanning');
+      isScanning = false;
+
+      showPage('page-scan');
+      setTimeout(() => {
+        startCamera();
+      }, 300);
+      initCashWallet();
+      renderCashWallet();
+      renderCardWallet();
+      updateCartDisplay();
+      updateCashDisplay();
+    });
+
+    document.getElementById('scanNextBtn').addEventListener('click', function() {
+      if (Object.keys(cart).length === 0) {
+        showToastError('scanError', '商品をスキャンしてください');
+        return;
+      }
+      stopCamera();
+      lastPaymentMethod = '';
+      lastInsertedAmount = 0;
+      showPage('page-payment');
+    });
+
+    document.getElementById('payCashBtn').addEventListener('click', function() {
+      lastPaymentMethod = '現金';
+      insertedCash = 0;
+      document.getElementById('cashInserted').textContent = '0';
+      document.getElementById('cashPurchase').textContent = totalAmount;
+      document.getElementById('cashNextBtn').disabled = true;
+      document.getElementById('dropHint').textContent = 'ここにドラッグ＆ドロップ（タップでも投入）';
+      initCashWallet();
+      renderCashWallet();
+      showPage('page-cash');
+    });
+
+    document.getElementById('payCardBtn').addEventListener('click', function() {
+      lastPaymentMethod = 'クレジットカード';
+      cardInserted = false;
+      document.getElementById('cardInserted').textContent = '0';
+      document.getElementById('cardPurchase').textContent = totalAmount;
+      document.getElementById('cardNextBtn').disabled = true;
+      document.getElementById('cardStatus').textContent = '';
+      document.getElementById('cardSpinner').classList.remove('show');
+      document.getElementById('cardDropHint').textContent = 'ここにカードをドラッグ（タップでも投入）';
+      renderCardWallet();
+      showPage('page-card');
+    });
+
+    document.getElementById('payQRBtn').addEventListener('click', function() {
+      lastPaymentMethod = 'QR決済';
+      qrScanned = false;
+      document.getElementById('qrInserted').textContent = '0';
+      document.getElementById('qrPurchase').textContent = totalAmount;
+      document.getElementById('qrNextBtn').disabled = true;
+      document.getElementById('qrResult').textContent = '';
+      document.getElementById('qrStatus').textContent = '待機中';
+      document.getElementById('qrStatus').style.color = '#64748b';
+      document.getElementById('qrScanBtn').textContent = '📷 読み取る';
+      document.getElementById('qrScanBtn').disabled = false;
+      document.getElementById('qrScanBtn').classList.remove('scanning');
+      qrIsScanning = false;
+      showPage('page-qr');
+      setTimeout(() => {
+        startQRCamera();
+      }, 400);
+    });
+
+    document.getElementById('scanBtn').addEventListener('click', performScan);
+
+    document.getElementById('qrScanBtn').addEventListener('click', performQRScan);
+
+    document.getElementById('cashNextBtn').addEventListener('click', function() {
+      if (insertedCash < totalAmount) {
+        showToastError('cashError', 'お金が不足しています');
+        return;
+      }
+      lastInsertedAmount = insertedCash;
+      showPage('page-receipt');
+    });
+
+    document.getElementById('cardNextBtn').addEventListener('click', function() {
+      lastInsertedAmount = totalAmount;
+      showPage('page-receipt');
+    });
+
+    document.getElementById('qrNextBtn').addEventListener('click', function() {
+      if (!qrScanned) {
+        alert('QRを読み取ってください');
+        return;
+      }
+      lastInsertedAmount = totalAmount;
+      showPage('page-receipt');
+    });
+
+    document.getElementById('receiptBtn').addEventListener('click', function() {
+      const html = generateReceipt();
+      const win = window.open('', '_blank');
+      if (win) { win.document.write(html);
+        win.document.close(); }
+      finishTransaction();
+    });
+
+    document.getElementById('invoiceBtn').addEventListener('click', function() {
+      const html = generateInvoice();
+      const win = window.open('', '_blank');
+      if (win) { win.document.write(html);
+        win.document.close(); }
+      finishTransaction();
+    });
+
+    document.getElementById('noReceiptBtn').addEventListener('click', function() {
+      finishTransaction();
+    });
+
+    function finishTransaction() {
+      clearCart();
+      showPage('page-end');
+      setTimeout(() => {
+        stopCamera();
+        stopQRCamera();
+        showPage('page-home');
+      }, 3000);
+    }
+
+    // ----- 初期化 -----
+    loadConfigsFromStorage();
+    updateConfigSelect();
+    if (allConfigs.length > 0) {
+      const first = allConfigs[0];
+      document.getElementById('configSelect').value = first.name;
+      loadConfigByName(first.name);
+    }
+    initCashWallet();
+    renderCashWallet();
+    renderCardWallet();
+    updateCartDisplay();
+    updateCashDisplay();
+
+    console.log('レジシミュレーター起動完了（ボタン押下時スキャン方式）');
+  </script>
+
 </body>
 </html>
