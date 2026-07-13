@@ -784,13 +784,10 @@
 
     <script>
         // ============================================================
-        //  レジシミュレーター 修正版
-        //  修正点：
-        //  1. QR読み取り枠を四角に（バーコードは横長）
-        //  2. 読み取り後にカメラが切れない（連続読み取り可能）
-        //  3. 現金支払いに「完了」ボタンを追加
-        //  4. 支払い完了後は自動で次へ（次へボタン廃止）
-        //  5. 終了画面から「戻る」ボタンで戻れる
+        //  レジシミュレーター 完全修正版
+        //  ・カメラは常時起動（プレビュー表示）
+        //  ・読み取りボタン押下時だけデコード実行（カメラは切らない）
+        //  ・戻るボタンでホームに戻れる
         // ============================================================
 
         // ----- 日付時刻 -----
@@ -853,19 +850,22 @@
             { id: 'card3', name: 'JCB', file: 'card3.png' }
         ];
 
-        // ----- カメラ制御（スキャン画面用・連続読み取り対応） -----
-        let html5QrCode = null;
-        let isScanning = false;
+        // ============================================================
+        //  バーコードスキャン（カメラ常時起動・ボタン押下時デコード）
+        // ============================================================
+        let barcodeScanner = null;
+        let isBarcodeDecoding = false;
 
-        function startCamera() {
-            if (html5QrCode) return;
-            html5QrCode = new Html5Qrcode("reader");
+        function startBarcodeCamera() {
+            if (barcodeScanner) return;
+            barcodeScanner = new Html5Qrcode("reader");
             const config = {
                 fps: 15,
                 qrbox: { width: 200, height: 100 },
                 aspectRatio: 1.0
             };
-            html5QrCode.start({ facingMode: "environment" }, config, () => {}, () => {})
+            // デコードコールバックは空（常時プレビューのみ）
+            barcodeScanner.start({ facingMode: "environment" }, config, () => {}, () => {})
                 .then(() => {
                     document.querySelector('.cam-overlay').textContent = 'バーコードをかざしてください';
                 })
@@ -875,24 +875,24 @@
                 });
         }
 
-        function stopCamera() {
-            if (html5QrCode) {
-                html5QrCode.stop().then(() => {
-                    html5QrCode.clear();
-                    html5QrCode = null;
+        function stopBarcodeCamera() {
+            if (barcodeScanner) {
+                barcodeScanner.stop().then(() => {
+                    barcodeScanner.clear();
+                    barcodeScanner = null;
                 }).catch(() => {});
             }
         }
 
-        // スキャン実行（連続読み取り可能）
-        function performScan() {
-            if (isScanning) return;
-            if (!html5QrCode) {
+        // 読み取りボタン押下時：一時的にデコードを有効にする
+        function performBarcodeScan() {
+            if (isBarcodeDecoding) return;
+            if (!barcodeScanner) {
                 showToastError('scanError', 'カメラが起動していません');
                 return;
             }
 
-            isScanning = true;
+            isBarcodeDecoding = true;
             const scanBtn = document.getElementById('scanBtn');
             const scanStatus = document.getElementById('scanStatus');
             scanBtn.textContent = '⏳ 読み取り中...';
@@ -901,40 +901,77 @@
             scanStatus.textContent = '読み取り中...';
             scanStatus.style.color = '#ef4444';
 
-            // 一時的なスキャナで1回読み取り（停止しない）
-            const tempScanner = new Html5Qrcode("reader");
-            tempScanner.start({ facingMode: "environment" }, { fps: 15, qrbox: { width: 200, height: 100 },
-                    aspectRatio: 1.0 },
-                (decodedText) => {
-                    // 読み取り成功
-                    isScanning = false;
+            // 一旦停止して、デコードありで再起動
+            barcodeScanner.stop().then(() => {
+                const config = {
+                    fps: 15,
+                    qrbox: { width: 200, height: 100 },
+                    aspectRatio: 1.0
+                };
+                barcodeScanner.start({ facingMode: "environment" }, config,
+                    // デコード成功
+                    (decodedText) => {
+                        // 読み取り完了
+                        isBarcodeDecoding = false;
+                        scanBtn.textContent = '📷 読み取る';
+                        scanBtn.disabled = false;
+                        scanBtn.classList.remove('scanning');
+                        scanStatus.textContent = '✅ 読み取り完了';
+                        scanStatus.style.color = '#10b981';
+                        playBeep(1200, 80);
+
+                        addToCart(decodedText);
+
+                        // デコードを止めて、再びプレビューモードに戻す
+                        barcodeScanner.stop().then(() => {
+                            const previewConfig = {
+                                fps: 15,
+                                qrbox: { width: 200, height: 100 },
+                                aspectRatio: 1.0
+                            };
+                            barcodeScanner.start({ facingMode: "environment" }, previewConfig, () => {},
+                            () => {});
+                        }).catch(() => {});
+                    },
+                    // デコードエラー（連続で呼ばれるので無視）
+                    () => {}
+                ).catch(() => {
+                    // start失敗
+                    isBarcodeDecoding = false;
                     scanBtn.textContent = '📷 読み取る';
                     scanBtn.disabled = false;
                     scanBtn.classList.remove('scanning');
-                    scanStatus.textContent = '✅ 読み取り完了';
-                    scanStatus.style.color = '#10b981';
-                    playBeep(1200, 80);
-
-                    addToCart(decodedText);
-
-                    // スキャナ停止（カメラは継続）
-                    tempScanner.stop().then(() => tempScanner.clear()).catch(() => {});
-                },
-                () => {}
-            ).catch(() => {
-                isScanning = false;
+                    scanStatus.textContent = '❌ エラー';
+                    scanStatus.style.color = '#ef4444';
+                    showToastError('scanError', 'スキャン開始エラー');
+                    // プレビューモードに戻す
+                    barcodeScanner.stop().then(() => {
+                        const previewConfig = {
+                            fps: 15,
+                            qrbox: { width: 200, height: 100 },
+                            aspectRatio: 1.0
+                        };
+                        barcodeScanner.start({ facingMode: "environment" }, previewConfig, () => {},
+                        () => {});
+                    }).catch(() => {});
+                });
+            }).catch(() => {
+                // stop失敗
+                isBarcodeDecoding = false;
                 scanBtn.textContent = '📷 読み取る';
                 scanBtn.disabled = false;
                 scanBtn.classList.remove('scanning');
                 scanStatus.textContent = '❌ エラー';
                 scanStatus.style.color = '#ef4444';
-                showToastError('scanError', 'スキャン開始エラー');
+                showToastError('scanError', 'カメラ停止エラー');
             });
         }
 
-        // ----- QR決済用カメラ（連続読み取り対応・四角枠） -----
+        // ============================================================
+        //  QR決済スキャン（カメラ常時起動・ボタン押下時デコード）
+        // ============================================================
         let qrScanner = null;
-        let qrIsScanning = false;
+        let isQRDecoding = false;
 
         function startQRCamera() {
             if (qrScanner) return;
@@ -960,13 +997,13 @@
         }
 
         function performQRScan() {
-            if (qrIsScanning) return;
+            if (isQRDecoding) return;
             if (!qrScanner) {
                 alert('カメラが起動していません');
                 return;
             }
 
-            qrIsScanning = true;
+            isQRDecoding = true;
             const btn = document.getElementById('qrScanBtn');
             const status = document.getElementById('qrStatus');
             btn.textContent = '⏳ 読み取り中...';
@@ -975,25 +1012,55 @@
             status.textContent = '読み取り中...';
             status.style.color = '#ef4444';
 
-            const tempScanner = new Html5Qrcode("qr-reader");
-            tempScanner.start({ facingMode: "environment" }, { fps: 15, qrbox: { width: 200, height: 200 },
-                    aspectRatio: 1.0 },
-                (decodedText) => {
-                    qrIsScanning = false;
+            qrScanner.stop().then(() => {
+                const config = {
+                    fps: 15,
+                    qrbox: { width: 200, height: 200 },
+                    aspectRatio: 1.0
+                };
+                qrScanner.start({ facingMode: "environment" }, config,
+                    (decodedText) => {
+                        isQRDecoding = false;
+                        btn.textContent = '📷 読み取る';
+                        btn.disabled = false;
+                        btn.classList.remove('scanning');
+                        status.textContent = '✅ 読み取り完了';
+                        status.style.color = '#10b981';
+                        playBeep(1200, 80);
+
+                        processQRPayment(decodedText);
+
+                        // プレビューモードに戻す
+                        qrScanner.stop().then(() => {
+                            const previewConfig = {
+                                fps: 15,
+                                qrbox: { width: 200, height: 200 },
+                                aspectRatio: 1.0
+                            };
+                            qrScanner.start({ facingMode: "environment" }, previewConfig, () => {},
+                            () => {});
+                        }).catch(() => {});
+                    },
+                    () => {}
+                ).catch(() => {
+                    isQRDecoding = false;
                     btn.textContent = '📷 読み取る';
                     btn.disabled = false;
                     btn.classList.remove('scanning');
-                    status.textContent = '✅ 読み取り完了';
-                    status.style.color = '#10b981';
-                    playBeep(1200, 80);
-
-                    processQRPayment(decodedText);
-
-                    tempScanner.stop().then(() => tempScanner.clear()).catch(() => {});
-                },
-                () => {}
-            ).catch(() => {
-                qrIsScanning = false;
+                    status.textContent = '❌ エラー';
+                    status.style.color = '#ef4444';
+                    qrScanner.stop().then(() => {
+                        const previewConfig = {
+                            fps: 15,
+                            qrbox: { width: 200, height: 200 },
+                            aspectRatio: 1.0
+                        };
+                        qrScanner.start({ facingMode: "environment" }, previewConfig, () => {},
+                        () => {});
+                    }).catch(() => {});
+                });
+            }).catch(() => {
+                isQRDecoding = false;
                 btn.textContent = '📷 読み取る';
                 btn.disabled = false;
                 btn.classList.remove('scanning');
@@ -1027,7 +1094,6 @@
                 qrScanned = true;
                 document.getElementById('qrInserted').textContent = totalAmount;
                 playBeep(1400, 150);
-                // 自動でレシート選択画面へ
                 setTimeout(() => {
                     lastPaymentMethod = 'QR決済';
                     lastInsertedAmount = totalAmount;
@@ -1286,7 +1352,6 @@
             document.getElementById('cashTotalDisplay').textContent = totalAmount + ' 円';
         }
 
-        // 完了ボタン押下時にお釣り計算＆次へ
         function completeCashPayment() {
             if (isCashComplete) return;
             if (insertedCash < totalAmount) {
@@ -1300,7 +1365,6 @@
                 showToastError('cashError', '✅ ぴったりです！');
                 playBeep(1400, 100);
             } else {
-                // おつりを計算して財布に戻す
                 let remaining = change;
                 const sorted = [...DENOMINATIONS].sort((a, b) => a.value - b.value);
                 let changeBreakdown = [];
@@ -1334,7 +1398,6 @@
             updateDropZone();
             updateCashDisplay();
 
-            // 自動でレシート選択画面へ
             setTimeout(() => {
                 lastPaymentMethod = '現金';
                 lastInsertedAmount = totalAmount + change;
@@ -1408,8 +1471,6 @@
                 playBeep(1400, 200);
                 cardInserted = false;
                 document.getElementById('cardDropHint').textContent = 'ここにカードをドラッグ（タップでも投入）';
-
-                // 自動でレシート選択画面へ
                 setTimeout(() => {
                     lastPaymentMethod = 'クレジットカード';
                     lastInsertedAmount = totalAmount;
@@ -1511,7 +1572,10 @@
             `;
         }
 
-        // ----- 画面遷移フロー -----
+        // ============================================================
+        //  画面遷移
+        // ============================================================
+
         document.getElementById('startBtn').addEventListener('click', function() {
             const sel = document.getElementById('configSelect');
             if (!sel.value || !currentConfig) {
@@ -1540,11 +1604,11 @@
             document.getElementById('scanBtn').textContent = '📷 読み取る';
             document.getElementById('scanBtn').disabled = false;
             document.getElementById('scanBtn').classList.remove('scanning');
-            isScanning = false;
+            isBarcodeDecoding = false;
 
             showPage('page-scan');
             setTimeout(() => {
-                startCamera();
+                startBarcodeCamera();
             }, 300);
             initCashWallet();
             renderCashWallet();
@@ -1558,7 +1622,7 @@
                 showToastError('scanError', '商品をスキャンしてください');
                 return;
             }
-            stopCamera();
+            // カメラは停止させない（バーコードスキャン用カメラはそのまま維持）
             lastPaymentMethod = '';
             lastInsertedAmount = 0;
             showPage('page-payment');
@@ -1601,14 +1665,14 @@
             document.getElementById('qrScanBtn').textContent = '📷 読み取る';
             document.getElementById('qrScanBtn').disabled = false;
             document.getElementById('qrScanBtn').classList.remove('scanning');
-            qrIsScanning = false;
+            isQRDecoding = false;
             showPage('page-qr');
             setTimeout(() => {
                 startQRCamera();
             }, 400);
         });
 
-        document.getElementById('scanBtn').addEventListener('click', performScan);
+        document.getElementById('scanBtn').addEventListener('click', performBarcodeScan);
         document.getElementById('qrScanBtn').addEventListener('click', performQRScan);
         document.getElementById('cashCompleteBtn').addEventListener('click', completeCashPayment);
 
@@ -1632,18 +1696,21 @@
             finishTransaction();
         });
 
-        document.getElementById('endReturnBtn').addEventListener('click', function() {
-            stopCamera();
-            stopQRCamera();
-            showPage('page-home');
-        });
-
         function finishTransaction() {
             clearCart();
             showPage('page-end');
         }
 
-        // ----- 初期化 -----
+        // 戻るボタンでホームに戻る（カメラも完全に停止）
+        document.getElementById('endReturnBtn').addEventListener('click', function() {
+            stopBarcodeCamera();
+            stopQRCamera();
+            showPage('page-home');
+        });
+
+        // ============================================================
+        //  初期化
+        // ============================================================
         loadConfigsFromStorage();
         updateConfigSelect();
         if (allConfigs.length > 0) {
@@ -1657,8 +1724,8 @@
         updateCartDisplay();
         updateCashDisplay();
 
-        console.log('レジシミュレーター 修正版 起動完了');
-        console.log('修正点: QR四角枠・連続読み取り・現金完了ボタン・自動次へ・戻るボタン');
+        console.log('レジシミュレーター 完全修正版 起動完了');
+        console.log('✅ カメラ常時起動 / ボタン押下時デコード / 戻るボタンでホームへ');
     </script>
 
 </body>
