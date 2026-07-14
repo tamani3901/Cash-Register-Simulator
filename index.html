@@ -945,7 +945,18 @@
             const config = {
                 fps: 15,
                 qrbox: { width: 200, height: 100 },
-                aspectRatio: 1.0
+                aspectRatio: 1.0,
+                // ▼ここから追加：読み取れるバーコードの形式を拡張
+                formatsToSupport: [
+                    Html5QrcodeSupportedFormats.EAN_13,
+                    Html5QrcodeSupportedFormats.EAN_8,
+                    Html5QrcodeSupportedFormats.CODE_128,
+                    Html5QrcodeSupportedFormats.CODE_39,
+                    Html5QrcodeSupportedFormats.UPC_A,
+                    Html5QrcodeSupportedFormats.UPC_E,
+                    Html5QrcodeSupportedFormats.QR_CODE
+                ]
+                // ▲ここまで追加
             };
             // デコードコールバック内でフラグ制御
             barcodeScanner.start({ facingMode: "environment" }, config,
