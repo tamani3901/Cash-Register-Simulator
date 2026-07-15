@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+    <!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
@@ -7,6 +7,7 @@
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js">
     </script>
     <style>
+        /* ===== ベース ===== */
         * {
             box-sizing: border-box;
             margin: 0;
@@ -118,6 +119,13 @@
         .btn-outline:active {
             background: #f1f5f9;
         }
+        .btn-warning {
+            background: #f59e0b;
+            color: white;
+        }
+        .btn-warning:active {
+            background: #d97706;
+        }
         .btn-lg {
             font-size: 1.6rem;
             padding: 24px 48px;
@@ -147,11 +155,84 @@
             }
         }
 
+        /* ===== モーダル ===== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 24px;
+            padding: 24px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: modalIn 0.3s ease;
+        }
+        @keyframes modalIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+        .modal-title {
+            font-size: 1.4rem;
+            font-weight: 800;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.8rem;
+            cursor: pointer;
+            color: #94a3b8;
+            padding: 0 8px;
+        }
+        .modal-close:active {
+            color: #475569;
+        }
+        .modal-body {
+            margin-bottom: 16px;
+        }
+        .modal-footer {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+        }
+        .modal-footer .btn {
+            min-width: 100px;
+            padding: 12px 20px;
+            font-size: 0.95rem;
+        }
+
         /* ===== 初期画面 ===== */
         #page-home {
             justify-content: center;
             align-items: center;
-            gap: 24px;
+            gap: 16px;
         }
         #page-home .home-title {
             font-size: 2.4rem;
@@ -162,7 +243,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
             width: 100%;
             max-width: 280px;
         }
@@ -196,11 +277,23 @@
             display: flex;
             gap: 8px;
             width: 100%;
+            flex-wrap: wrap;
         }
         .home-sub .config-actions .btn {
             flex: 1;
+            min-width: 60px;
             padding: 10px 12px;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
+        }
+        .home-sub .home-buttons {
+            display: flex;
+            gap: 8px;
+            width: 100%;
+        }
+        .home-sub .home-buttons .btn {
+            flex: 1;
+            padding: 12px;
+            font-size: 0.9rem;
         }
 
         /* ===== スキャン画面 ===== */
@@ -231,7 +324,7 @@
             border-radius: 16px;
             padding: 8px 12px;
             min-height: 80px;
-            max-height: 35vh;
+            max-height: 30vh;
             box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
         }
         .scan-list .empty {
@@ -266,6 +359,11 @@
             border-radius: 12px;
             margin: 2px 0;
         }
+        .scan-total .tax-label {
+            font-weight: 400;
+            font-size: 0.8rem;
+            color: #64748b;
+        }
 
         .camera-area {
             height: 28vh;
@@ -298,12 +396,13 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 70%;
-            height: 30%;
-            border: 3px solid rgba(255, 255, 255, 0.4);
+            width: 65%;
+            height: 28%;
+            border: 3px solid rgba(255, 255, 255, 0.5);
             border-radius: 8px;
             pointer-events: none;
-            box-shadow: 0 0 30px rgba(255, 255, 255, 0.05);
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.03);
         }
         .scan-guide-barcode::after {
             content: 'バーコードを枠内に';
@@ -322,13 +421,14 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 50%;
+            width: 45%;
             height: 0;
-            padding-bottom: 50%;
-            border: 3px solid rgba(255, 255, 255, 0.4);
-            border-radius: 8px;
+            padding-bottom: 45%;
+            border: 3px solid rgba(255, 255, 255, 0.5);
+            border-radius: 12px;
             pointer-events: none;
-            box-shadow: 0 0 30px rgba(255, 255, 255, 0.05);
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.03);
         }
         .scan-guide-qr::after {
             content: 'QRを枠内に';
@@ -399,18 +499,28 @@
         #page-payment {
             justify-content: center;
             align-items: center;
-            gap: 20px;
+            gap: 16px;
             padding: 20px 0;
         }
         #page-payment .pay-title {
             font-size: 1.4rem;
             font-weight: 700;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
+        }
+        #page-payment .pay-total {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 4px;
+        }
+        #page-payment .pay-tax {
+            font-size: 0.9rem;
+            color: #64748b;
         }
         .pay-buttons {
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 14px;
             width: 100%;
             max-width: 260px;
         }
@@ -511,6 +621,11 @@
         }
         .cash-actions .cash-input-display span {
             color: #0f172a;
+        }
+        .cash-tax-info {
+            font-size: 0.8rem;
+            color: #64748b;
+            text-align: right;
         }
         .cash-complete-btn {
             display: flex;
@@ -717,6 +832,102 @@
             color: #64748b;
         }
 
+        /* ===== 設定編集モーダル（商品編集テーブル） ===== */
+        .edit-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        .edit-table th {
+            text-align: left;
+            padding: 6px 4px;
+            border-bottom: 2px solid #e2e8f0;
+            background: #f8fafc;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+        .edit-table td {
+            padding: 4px;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: middle;
+        }
+        .edit-table input {
+            width: 100%;
+            padding: 4px 6px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            background: white;
+        }
+        .edit-table input:focus {
+            border-color: #3b82f6;
+            outline: none;
+        }
+        .edit-table .code-cell {
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            color: #475569;
+            white-space: nowrap;
+        }
+        .edit-table .delete-row-btn {
+            background: none;
+            border: none;
+            color: #ef4444;
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 0 4px;
+        }
+        .edit-table .delete-row-btn:active {
+            color: #dc2626;
+        }
+        .edit-add-row {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+            flex-wrap: wrap;
+        }
+        .edit-add-row input {
+            flex: 1;
+            min-width: 60px;
+            padding: 6px 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 0.85rem;
+        }
+        .edit-add-row .btn {
+            padding: 6px 14px;
+            font-size: 0.85rem;
+            min-width: auto;
+        }
+        .modal-scroll {
+            max-height: 50vh;
+            overflow-y: auto;
+        }
+
+        /* ===== 税率設定モーダル ===== */
+        .tax-input-group {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            margin: 8px 0;
+        }
+        .tax-input-group input {
+            width: 120px;
+            padding: 10px 14px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            text-align: center;
+        }
+        .tax-input-group input:focus {
+            border-color: #3b82f6;
+            outline: none;
+        }
+        .tax-input-group span {
+            font-weight: 700;
+        }
+
         .flex-1 {
             flex: 1;
         }
@@ -732,14 +943,20 @@
         .mb-1 {
             margin-bottom: 4px;
         }
+        .gap-1 {
+            gap: 4px;
+        }
 
-        .scan-list::-webkit-scrollbar {
+        .scan-list::-webkit-scrollbar,
+        .modal-scroll::-webkit-scrollbar {
             width: 4px;
         }
-        .scan-list::-webkit-scrollbar-track {
+        .scan-list::-webkit-scrollbar-track,
+        .modal-scroll::-webkit-scrollbar-track {
             background: transparent;
         }
-        .scan-list::-webkit-scrollbar-thumb {
+        .scan-list::-webkit-scrollbar-thumb,
+        .modal-scroll::-webkit-scrollbar-thumb {
             background: #cbd5e1;
             border-radius: 8px;
         }
@@ -774,9 +991,6 @@
         .camera-switch-overlay .btn:active {
             transform: scale(0.92);
         }
-        .camera-switch-overlay .btn .cam-icon {
-            font-size: 1rem;
-        }
     </style>
 </head>
 <body>
@@ -796,10 +1010,14 @@
                     <input type="file" id="fileInput" accept=".json" multiple>
                 </div>
                 <div class="config-actions">
+                    <button class="btn btn-outline btn-sm" id="editConfigBtn">✏️ 編集</button>
                     <button class="btn btn-outline btn-sm" id="deleteConfigBtn">🗑 選択中を削除</button>
                     <button class="btn btn-danger btn-sm" id="deleteAllConfigsBtn">🗑 全削除</button>
                 </div>
-                <button class="btn btn-primary btn-lg" id="startBtn">▶ 開始</button>
+                <div class="home-buttons">
+                    <button class="btn btn-outline btn-sm" id="taxSettingBtn">💰 税率設定</button>
+                    <button class="btn btn-primary btn-lg" id="startBtn">▶ 開始</button>
+                </div>
             </div>
         </div>
 
@@ -813,7 +1031,7 @@
                 <div class="empty">商品をスキャンするとここに表示されます</div>
             </div>
             <div class="scan-total">
-                <span>合計</span>
+                <span>合計 <span class="tax-label" id="taxLabel">(税込)</span></span>
                 <span id="scanTotalPrice">0 円</span>
             </div>
 
@@ -825,9 +1043,7 @@
             <div class="camera-area" id="cameraArea">
                 <div id="reader"></div>
                 <div class="cam-overlay">カメラ起動中...</div>
-                <!-- バーコード用ガイド枠（横長） -->
                 <div class="scan-guide-barcode" id="guideBarcode"></div>
-                <!-- カメラ切替ボタン（カメラ領域に重ね） -->
                 <div class="camera-switch-overlay">
                     <button class="btn btn-sm" id="switchBarcodeCam">🔄 切替</button>
                 </div>
@@ -842,6 +1058,8 @@
         <!-- ========== 支払い方法選択 ========== -->
         <div id="page-payment" class="page">
             <div class="pay-title">💳 支払い方法を選んでください</div>
+            <div class="pay-total" id="paymentTotal">0 円</div>
+            <div class="pay-tax" id="paymentTax">(税込)</div>
             <div class="pay-buttons">
                 <button class="btn btn-primary" id="payCashBtn">💰 現金</button>
                 <button class="btn btn-primary" id="payCardBtn">💳 クレジットカード</button>
@@ -863,6 +1081,7 @@
                 <span class="cash-input-display">投入額：<span id="cashInserted">0</span> 円</span>
                 <span class="cash-input-display">購入額：<span id="cashPurchase">0</span> 円</span>
             </div>
+            <div class="cash-tax-info" id="cashTaxInfo">(税込)</div>
             <div id="cashError" class="toast-error"></div>
             <div class="cash-complete-btn">
                 <button class="btn btn-success" id="cashCompleteBtn">✅ 完了</button>
@@ -882,6 +1101,7 @@
                 <span class="cash-input-display">購入額：<span id="cardPurchase">0</span> 円</span>
                 <span class="cash-input-display">投入額：<span id="cardInserted">0</span> 円</span>
             </div>
+            <div class="cash-tax-info" id="cardTaxInfo">(税込)</div>
         </div>
 
         <!-- ========== QR決済 ========== -->
@@ -889,9 +1109,7 @@
             <div class="qr-title">📱 QRを読み取ってください</div>
             <div class="qr-camera" id="qrCameraArea">
                 <div id="qr-reader"></div>
-                <!-- QR用ガイド枠（正方形） -->
                 <div class="scan-guide-qr" id="guideQR"></div>
-                <!-- カメラ切替ボタン -->
                 <div class="camera-switch-overlay">
                     <button class="btn btn-sm" id="switchQRCam">🔄 切替</button>
                 </div>
@@ -905,6 +1123,7 @@
                 <span class="cash-input-display">購入額：<span id="qrPurchase">0</span> 円</span>
                 <span class="cash-input-display">投入額：<span id="qrInserted">0</span> 円</span>
             </div>
+            <div class="cash-tax-info" id="qrTaxInfo">(税込)</div>
         </div>
 
         <!-- ========== レシート／領収書選択 ========== -->
@@ -925,11 +1144,82 @@
         </div>
     </div>
 
+    <!-- ========== 税率設定モーダル ========== -->
+    <div class="modal-overlay" id="taxModal">
+        <div class="modal-content">
+            <div class="modal-title">
+                <span>💰 税率設定</span>
+                <button class="modal-close" id="taxModalClose">×</button>
+            </div>
+            <div class="modal-body">
+                <p style="color:#64748b; margin-bottom:12px;">現在の消費税率を設定します。商品価格に自動で加算されます。</p>
+                <div class="tax-input-group">
+                    <label style="font-weight:600;">消費税率</label>
+                    <input type="number" id="taxRateInput" value="10" min="0" max="100" step="0.1">
+                    <span>%</span>
+                </div>
+                <div style="font-size:0.85rem; color:#94a3b8; margin-top:4px;">例：10% = 商品価格の10%が加算されます</div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="taxModalCancel">キャンセル</button>
+                <button class="btn btn-primary" id="taxModalSave">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== 設定編集モーダル ========== -->
+    <div class="modal-overlay" id="editModal">
+        <div class="modal-content">
+            <div class="modal-title">
+                <span>✏️ 設定編集: <span id="editConfigName">(なし)</span></span>
+                <button class="modal-close" id="editModalClose">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-scroll" id="editScrollArea">
+                    <table class="edit-table">
+                        <thead>
+                            <tr>
+                                <th style="width:30%;">JANコード</th>
+                                <th style="width:40%;">商品名</th>
+                                <th style="width:20%;">価格</th>
+                                <th style="width:10%;"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="editTableBody">
+                            <!-- 動的に生成 -->
+                        </tbody>
+                    </table>
+                    <div class="edit-add-row">
+                        <input type="text" id="editNewCode" placeholder="JANコード" style="flex:1.2;">
+                        <input type="text" id="editNewName" placeholder="商品名" style="flex:1.5;">
+                        <input type="number" id="editNewPrice" placeholder="価格" style="flex:0.8;">
+                        <button class="btn btn-primary btn-sm" id="editAddRowBtn">追加</button>
+                    </div>
+                    <div style="margin-top:12px; border-top:1px solid #e2e8f0; padding-top:12px;">
+                        <label style="font-weight:600; font-size:0.9rem;">QR決済設定</label>
+                        <div style="display:flex; gap:8px; margin-top:4px; flex-wrap:wrap;">
+                            <input type="text" id="editQRKey" placeholder="QR文字列 (例: paypay)" style="flex:1; min-width:100px; padding:6px 10px; border:1px solid #e2e8f0; border-radius:6px;">
+                            <input type="text" id="editQRName" placeholder="表示名 (例: PayPay)" style="flex:1; min-width:100px; padding:6px 10px; border:1px solid #e2e8f0; border-radius:6px;">
+                            <button class="btn btn-primary btn-sm" id="editQRAddBtn">追加</button>
+                        </div>
+                        <div id="editQRList" style="margin-top:6px; display:flex; flex-wrap:wrap; gap:6px;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="editModalCancel">キャンセル</button>
+                <button class="btn btn-success" id="editModalSave">💾 保存</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // ============================================================
-        //  レジシミュレーター（カメラ切替機能付き）
-        //  カメラ向き：背面(environment) / 前面(user) を切り替え可能
-        //  バーコード用とQR用で独立したカメラを制御
+        //  レジシミュレーター 完全版
+        //  機能:
+        //  1. 消費税率設定（モーダルから変更）
+        //  2. バーコード読み取り精度向上（fps向上・枠位置調整）
+        //  3. 設定ファイル編集機能（商品追加・削除・変更）
         // ============================================================
 
         // ----- 日付時刻 -----
@@ -961,10 +1251,12 @@
 
         // ----- グローバル状態 -----
         let currentConfig = null;
+        let currentConfigName = '';
         let allConfigs = [];
         let cart = {};
-        let totalAmount = 0;
+        let totalAmount = 0; // 税込合計
         let totalItems = 0;
+        let taxRate = 10; // デフォルト10%
 
         let cashWallet = {};
         let insertedCash = 0;
@@ -974,8 +1266,7 @@
         let lastPaymentMethod = '';
         let lastInsertedAmount = 0;
 
-        // カメラ向き（共通）
-        let cameraFacingMode = 'environment'; // 'environment' | 'user'
+        let cameraFacingMode = 'environment';
 
         const DENOMINATIONS = [
             { value: 10000, file: '10000.png', label: '1万円' },
@@ -995,8 +1286,360 @@
             { id: 'card3', name: 'JCB', file: 'card3.png' }
         ];
 
+        // ----- 税率管理 -----
+        function loadTaxRate() {
+            try {
+                const saved = localStorage.getItem('register_tax_rate');
+                if (saved !== null) {
+                    taxRate = parseFloat(saved);
+                    if (isNaN(taxRate) || taxRate < 0) taxRate = 10;
+                }
+            } catch { taxRate = 10; }
+            document.getElementById('taxRateInput').value = taxRate;
+            updateTaxDisplay();
+        }
+
+        function saveTaxRate(rate) {
+            taxRate = rate;
+            localStorage.setItem('register_tax_rate', String(rate));
+            updateTaxDisplay();
+        }
+
+        function updateTaxDisplay() {
+            const label = document.getElementById('taxLabel');
+            if (label) {
+                label.textContent = `(税込 ${taxRate}%)`;
+            }
+            // 支払い画面の税表示も更新
+            const taxInfoEls = document.querySelectorAll('.cash-tax-info');
+            taxInfoEls.forEach(el => {
+                el.textContent = `(税込 ${taxRate}%)`;
+            });
+            const paymentTax = document.getElementById('paymentTax');
+            if (paymentTax) {
+                paymentTax.textContent = `(税込 ${taxRate}%)`;
+            }
+        }
+
+        function calcTaxIncluded(price) {
+            return Math.round(price * (1 + taxRate / 100));
+        }
+
+        function calcTaxAmount(price) {
+            return Math.round(price * taxRate / 100);
+        }
+
+        // ----- 設定読み込み -----
+        function loadConfigsFromStorage() {
+            try {
+                const raw = localStorage.getItem('register_configs');
+                allConfigs = raw ? JSON.parse(raw) : [];
+            } catch { allConfigs = []; }
+        }
+
+        function saveConfigsToStorage() {
+            localStorage.setItem('register_configs', JSON.stringify(allConfigs));
+        }
+
+        function loadConfigByName(name) {
+            const found = allConfigs.find(c => c.name === name);
+            if (found) {
+                currentConfig = found.data;
+                currentConfigName = name;
+                return true;
+            }
+            currentConfig = null;
+            currentConfigName = '';
+            return false;
+        }
+
+        function updateConfigSelect() {
+            const sel = document.getElementById('configSelect');
+            const currentVal = sel.value;
+            sel.innerHTML = '<option value="">-- 設定を選択 --</option>';
+            for (const c of allConfigs) {
+                const opt = document.createElement('option');
+                opt.value = c.name;
+                opt.textContent = c.name;
+                sel.appendChild(opt);
+            }
+            if (currentVal && allConfigs.some(c => c.name === currentVal)) {
+                sel.value = currentVal;
+            } else if (allConfigs.length > 0) {
+                sel.value = allConfigs[0].name;
+            }
+            if (sel.value) {
+                loadConfigByName(sel.value);
+            } else {
+                currentConfig = null;
+                currentConfigName = '';
+            }
+        }
+
+        // ----- ファイルアップロード -----
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const files = e.target.files;
+            for (const file of files) {
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    try {
+                        const data = JSON.parse(ev.target.result);
+                        if (!data.products || typeof data.products !== 'object') {
+                            alert('商品データが正しくありません（"products" オブジェクトが必要です）');
+                            return;
+                        }
+                        let name = file.name.replace(/\.[^.]+$/, '');
+                        let baseName = name;
+                        let idx = 1;
+                        while (allConfigs.some(c => c.name === name)) {
+                            name = baseName + '_' + idx;
+                            idx++;
+                        }
+                        allConfigs.push({ name, data });
+                        saveConfigsToStorage();
+                        updateConfigSelect();
+                        document.getElementById('configSelect').value = name;
+                        loadConfigByName(name);
+                        playBeep(1000, 100);
+                        alert(`「${name}」を読み込みました`);
+                    } catch (err) {
+                        alert('JSONの解析に失敗しました: ' + err.message);
+                    }
+                };
+                reader.readAsText(file);
+            }
+            e.target.value = '';
+        });
+
+        document.getElementById('fileUploadArea').addEventListener('click', function() {
+            document.getElementById('fileInput').click();
+        });
+
+        document.getElementById('configSelect').addEventListener('change', function() {
+            if (this.value) loadConfigByName(this.value);
+            else currentConfig = null;
+        });
+
+        // ----- 設定削除機能 -----
+        document.getElementById('deleteConfigBtn').addEventListener('click', function() {
+            const sel = document.getElementById('configSelect');
+            const name = sel.value;
+            if (!name) {
+                alert('削除する設定を選択してください');
+                return;
+            }
+            if (!confirm(`「${name}」を削除しますか？`)) return;
+            const idx = allConfigs.findIndex(c => c.name === name);
+            if (idx !== -1) {
+                allConfigs.splice(idx, 1);
+                saveConfigsToStorage();
+                updateConfigSelect();
+                currentConfig = null;
+                currentConfigName = '';
+                alert(`「${name}」を削除しました`);
+            }
+        });
+
+        document.getElementById('deleteAllConfigsBtn').addEventListener('click', function() {
+            if (allConfigs.length === 0) {
+                alert('削除する設定がありません');
+                return;
+            }
+            if (!confirm('すべての設定データを削除しますか？')) return;
+            allConfigs = [];
+            saveConfigsToStorage();
+            updateConfigSelect();
+            currentConfig = null;
+            currentConfigName = '';
+            alert('すべての設定を削除しました');
+        });
+
         // ============================================================
-        //  バーコードスキャン（カメラ常時起動・フラグ制御）
+        //  設定編集機能（モーダル）
+        // ============================================================
+        let editTempData = null;
+        let editTempQR = {};
+
+        function openEditModal() {
+            const name = document.getElementById('configSelect').value;
+            if (!name || !currentConfig) {
+                alert('編集する設定を選択してください');
+                return;
+            }
+            document.getElementById('editConfigName').textContent = name;
+            // データをディープコピー
+            editTempData = JSON.parse(JSON.stringify(currentConfig.products || {}));
+            editTempQR = JSON.parse(JSON.stringify(currentConfig.qrPayments || {}));
+            renderEditTable();
+            renderEditQRList();
+            document.getElementById('editModal').classList.add('active');
+        }
+
+        function renderEditTable() {
+            const tbody = document.getElementById('editTableBody');
+            tbody.innerHTML = '';
+            const codes = Object.keys(editTempData).sort();
+            if (codes.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#94a3b8;padding:12px;">商品が登録されていません</td></tr>';
+                return;
+            }
+            for (const code of codes) {
+                const item = editTempData[code];
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="code-cell">${code}</td>
+                    <td><input type="text" class="edit-name-input" data-code="${code}" value="${item.name}"></td>
+                    <td><input type="number" class="edit-price-input" data-code="${code}" value="${item.price}" min="0" step="1"></td>
+                    <td><button class="delete-row-btn" data-code="${code}">✕</button></td>
+                `;
+                tbody.appendChild(tr);
+            }
+            // 削除ボタン
+            tbody.querySelectorAll('.delete-row-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const code = this.dataset.code;
+                    if (confirm(`「${editTempData[code].name}」を削除しますか？`)) {
+                        delete editTempData[code];
+                        renderEditTable();
+                    }
+                });
+            });
+            // 編集イベント（リアルタイム更新）
+            tbody.querySelectorAll('.edit-name-input').forEach(inp => {
+                inp.addEventListener('change', function() {
+                    const code = this.dataset.code;
+                    if (editTempData[code]) {
+                        editTempData[code].name = this.value.trim() || '無名';
+                    }
+                });
+            });
+            tbody.querySelectorAll('.edit-price-input').forEach(inp => {
+                inp.addEventListener('change', function() {
+                    const code = this.dataset.code;
+                    if (editTempData[code]) {
+                        const val = parseInt(this.value);
+                        editTempData[code].price = isNaN(val) || val < 0 ? 0 : val;
+                    }
+                });
+            });
+        }
+
+        function renderEditQRList() {
+            const container = document.getElementById('editQRList');
+            container.innerHTML = '';
+            const keys = Object.keys(editTempQR);
+            if (keys.length === 0) {
+                container.innerHTML = '<span style="color:#94a3b8; font-size:0.85rem;">QR決済が登録されていません</span>';
+                return;
+            }
+            for (const key of keys) {
+                const name = editTempQR[key];
+                const badge = document.createElement('span');
+                badge.style.cssText =
+                    'background:#e2e8f0; border-radius:40px; padding:4px 12px; font-size:0.8rem; display:inline-flex; align-items:center; gap:6px;';
+                badge.innerHTML = `${key} → ${name} <button class="delete-row-btn" data-qrkey="${key}" style="font-size:0.9rem; padding:0 2px;">✕</button>`;
+                badge.querySelector('.delete-row-btn').addEventListener('click', function() {
+                    const k = this.dataset.qrkey;
+                    delete editTempQR[k];
+                    renderEditQRList();
+                });
+                container.appendChild(badge);
+            }
+        }
+
+        // 編集モーダル: 新規商品追加
+        document.getElementById('editAddRowBtn').addEventListener('click', function() {
+            const code = document.getElementById('editNewCode').value.trim();
+            const name = document.getElementById('editNewName').value.trim();
+            const price = parseInt(document.getElementById('editNewPrice').value);
+            if (!code) { alert('JANコードを入力してください'); return; }
+            if (!name) { alert('商品名を入力してください'); return; }
+            if (isNaN(price) || price < 0) { alert('価格を正しく入力してください'); return; }
+            if (editTempData[code]) {
+                alert('このコードは既に存在します');
+                return;
+            }
+            editTempData[code] = { name, price };
+            document.getElementById('editNewCode').value = '';
+            document.getElementById('editNewName').value = '';
+            document.getElementById('editNewPrice').value = '';
+            renderEditTable();
+        });
+
+        // 編集モーダル: QR追加
+        document.getElementById('editQRAddBtn').addEventListener('click', function() {
+            const key = document.getElementById('editQRKey').value.trim();
+            const name = document.getElementById('editQRName').value.trim();
+            if (!key) { alert('QR文字列を入力してください'); return; }
+            if (!name) { alert('表示名を入力してください'); return; }
+            editTempQR[key] = name;
+            document.getElementById('editQRKey').value = '';
+            document.getElementById('editQRName').value = '';
+            renderEditQRList();
+        });
+
+        // 編集モーダル: 保存
+        document.getElementById('editModalSave').addEventListener('click', function() {
+            const name = document.getElementById('editConfigName').textContent;
+            if (!name) { alert('設定名がありません'); return; }
+            // 現在の編集データを反映
+            const idx = allConfigs.findIndex(c => c.name === name);
+            if (idx === -1) {
+                alert('設定が見つかりません');
+                return;
+            }
+            allConfigs[idx].data.products = JSON.parse(JSON.stringify(editTempData));
+            allConfigs[idx].data.qrPayments = JSON.parse(JSON.stringify(editTempQR));
+            saveConfigsToStorage();
+            // 現在の設定を再読み込み
+            loadConfigByName(name);
+            updateConfigSelect();
+            document.getElementById('editModal').classList.remove('active');
+            alert('設定を保存しました');
+            playBeep(1200, 100);
+        });
+
+        document.getElementById('editModalClose').addEventListener('click', function() {
+            document.getElementById('editModal').classList.remove('active');
+        });
+        document.getElementById('editModalCancel').addEventListener('click', function() {
+            document.getElementById('editModal').classList.remove('active');
+        });
+
+        document.getElementById('editConfigBtn').addEventListener('click', openEditModal);
+
+        // ============================================================
+        //  税率設定モーダル
+        // ============================================================
+        document.getElementById('taxSettingBtn').addEventListener('click', function() {
+            document.getElementById('taxRateInput').value = taxRate;
+            document.getElementById('taxModal').classList.add('active');
+        });
+
+        document.getElementById('taxModalClose').addEventListener('click', function() {
+            document.getElementById('taxModal').classList.remove('active');
+        });
+        document.getElementById('taxModalCancel').addEventListener('click', function() {
+            document.getElementById('taxModal').classList.remove('active');
+        });
+
+        document.getElementById('taxModalSave').addEventListener('click', function() {
+            const val = parseFloat(document.getElementById('taxRateInput').value);
+            if (isNaN(val) || val < 0) {
+                alert('正しい数値を入力してください');
+                return;
+            }
+            saveTaxRate(val);
+            document.getElementById('taxModal').classList.remove('active');
+            // カート表示更新
+            updateCartDisplay();
+            updateCashDisplay();
+            playBeep(1000, 80);
+            alert(`税率を ${val}% に設定しました`);
+        });
+
+        // ============================================================
+        //  バーコードスキャン（カメラ常時起動・フラグ制御・精度向上）
         // ============================================================
         let barcodeScanner = null;
         let isBarcodeScanActive = false;
@@ -1004,18 +1647,18 @@
         let isBarcodeCameraStarting = false;
 
         function startBarcodeCamera() {
-            if (barcodeScanner) {
-                // 既に起動している場合は再起動しない（切替時はstop後に呼ばれる）
-                return;
-            }
+            if (barcodeScanner) return;
             if (isBarcodeCameraStarting) return;
             isBarcodeCameraStarting = true;
 
             barcodeScanner = new Html5Qrcode("reader");
             const config = {
-                fps: 15,
-                qrbox: { width: 200, height: 100 },
-                aspectRatio: 1.0
+                fps: 30, // フレームレート向上で精度アップ
+                qrbox: { width: 250, height: 120 }, // 枠サイズ調整
+                aspectRatio: 1.0,
+                experimentalFeatures: {
+                    useBarCodeDetectorIfSupported: true // 高速バーコード検出
+                }
             };
             barcodeScanner.start({ facingMode: cameraFacingMode }, config,
                 (decodedText) => {
@@ -1064,17 +1707,14 @@
 
         function restartBarcodeCamera() {
             stopBarcodeCamera();
-            // 少し待ってから再起動
             setTimeout(() => {
                 startBarcodeCamera();
             }, 300);
         }
 
-        // バーコード用カメラ切替
         function switchBarcodeCamera() {
             cameraFacingMode = (cameraFacingMode === 'environment') ? 'user' : 'environment';
             restartBarcodeCamera();
-            // ステータス表示を更新
             const status = document.getElementById('scanStatus');
             status.textContent = `📷 ${cameraFacingMode === 'environment' ? '背面' : '前面'}に切替`;
             status.style.color = '#3b82f6';
@@ -1132,8 +1772,8 @@
 
             qrScanner = new Html5Qrcode("qr-reader");
             const config = {
-                fps: 15,
-                qrbox: { width: 200, height: 200 },
+                fps: 30,
+                qrbox: { width: 250, height: 250 },
                 aspectRatio: 1.0
             };
             qrScanner.start({ facingMode: cameraFacingMode }, config,
@@ -1265,119 +1905,6 @@
             }
         }
 
-        // ----- 設定読み込み -----
-        function loadConfigsFromStorage() {
-            try {
-                const raw = localStorage.getItem('register_configs');
-                allConfigs = raw ? JSON.parse(raw) : [];
-            } catch { allConfigs = []; }
-        }
-
-        function saveConfigsToStorage() {
-            localStorage.setItem('register_configs', JSON.stringify(allConfigs));
-        }
-
-        function loadConfigByName(name) {
-            const found = allConfigs.find(c => c.name === name);
-            if (found) { currentConfig = found.data; return true; }
-            return false;
-        }
-
-        function updateConfigSelect() {
-            const sel = document.getElementById('configSelect');
-            const currentVal = sel.value;
-            sel.innerHTML = '<option value="">-- 設定を選択 --</option>';
-            for (const c of allConfigs) {
-                const opt = document.createElement('option');
-                opt.value = c.name;
-                opt.textContent = c.name;
-                sel.appendChild(opt);
-            }
-            if (currentVal && allConfigs.some(c => c.name === currentVal)) {
-                sel.value = currentVal;
-            } else if (allConfigs.length > 0) {
-                sel.value = allConfigs[0].name;
-            }
-            if (sel.value) loadConfigByName(sel.value);
-            else currentConfig = null;
-        }
-
-        // ----- ファイルアップロード -----
-        document.getElementById('fileInput').addEventListener('change', function(e) {
-            const files = e.target.files;
-            for (const file of files) {
-                const reader = new FileReader();
-                reader.onload = function(ev) {
-                    try {
-                        const data = JSON.parse(ev.target.result);
-                        if (!data.products || typeof data.products !== 'object') {
-                            alert('商品データが正しくありません（"products" オブジェクトが必要です）');
-                            return;
-                        }
-                        let name = file.name.replace(/\.[^.]+$/, '');
-                        let baseName = name;
-                        let idx = 1;
-                        while (allConfigs.some(c => c.name === name)) {
-                            name = baseName + '_' + idx;
-                            idx++;
-                        }
-                        allConfigs.push({ name, data });
-                        saveConfigsToStorage();
-                        updateConfigSelect();
-                        document.getElementById('configSelect').value = name;
-                        loadConfigByName(name);
-                        playBeep(1000, 100);
-                        alert(`「${name}」を読み込みました`);
-                    } catch (err) {
-                        alert('JSONの解析に失敗しました: ' + err.message);
-                    }
-                };
-                reader.readAsText(file);
-            }
-            e.target.value = '';
-        });
-
-        document.getElementById('fileUploadArea').addEventListener('click', function() {
-            document.getElementById('fileInput').click();
-        });
-
-        document.getElementById('configSelect').addEventListener('change', function() {
-            if (this.value) loadConfigByName(this.value);
-            else currentConfig = null;
-        });
-
-        // ----- 設定削除機能 -----
-        document.getElementById('deleteConfigBtn').addEventListener('click', function() {
-            const sel = document.getElementById('configSelect');
-            const name = sel.value;
-            if (!name) {
-                alert('削除する設定を選択してください');
-                return;
-            }
-            if (!confirm(`「${name}」を削除しますか？`)) return;
-            const idx = allConfigs.findIndex(c => c.name === name);
-            if (idx !== -1) {
-                allConfigs.splice(idx, 1);
-                saveConfigsToStorage();
-                updateConfigSelect();
-                currentConfig = null;
-                alert(`「${name}」を削除しました`);
-            }
-        });
-
-        document.getElementById('deleteAllConfigsBtn').addEventListener('click', function() {
-            if (allConfigs.length === 0) {
-                alert('削除する設定がありません');
-                return;
-            }
-            if (!confirm('すべての設定データを削除しますか？')) return;
-            allConfigs = [];
-            saveConfigsToStorage();
-            updateConfigSelect();
-            currentConfig = null;
-            alert('すべての設定を削除しました');
-        });
-
         // ----- ページ切り替え -----
         function showPage(pageId) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -1385,7 +1912,7 @@
             if (target) target.classList.add('active');
         }
 
-        // ----- カート操作 -----
+        // ----- カート操作（税込計算） -----
         function addToCart(barcode) {
             if (!currentConfig) {
                 showToastError('scanError', '設定が読み込まれていません');
@@ -1400,7 +1927,12 @@
             if (cart[barcode]) {
                 cart[barcode].quantity += 1;
             } else {
-                cart[barcode] = { name: product.name, price: product.price, quantity: 1 };
+                cart[barcode] = {
+                    name: product.name,
+                    price: product.price,
+                    quantity: 1,
+                    taxIncludedPrice: calcTaxIncluded(product.price)
+                };
             }
             updateCartDisplay();
             playBeep(1200, 80);
@@ -1413,23 +1945,30 @@
             let count = 0;
             for (const code in cart) {
                 const item = cart[code];
-                total += item.price * item.quantity;
+                const subtotal = item.taxIncludedPrice * item.quantity;
+                total += subtotal;
                 count += item.quantity;
                 html += `<div class="scan-item">
                     <span class="sname">${item.name}</span>
-                    <span class="sprice">${item.price}円 × ${item.quantity}</span>
+                    <span class="sprice">${item.taxIncludedPrice}円 × ${item.quantity}</span>
                 </div>`;
             }
             if (!html) html = '<div class="empty">商品をスキャンするとここに表示されます</div>';
             list.innerHTML = html;
             document.getElementById('scanCount').textContent = count + '点';
-            document.getElementById('scanTotalPrice').textContent = total + ' 円';
             totalAmount = total;
+            document.getElementById('scanTotalPrice').textContent = total + ' 円';
             totalItems = count;
+
+            // 支払い画面にも反映
+            const paymentTotal = document.getElementById('paymentTotal');
+            if (paymentTotal) paymentTotal.textContent = total + ' 円';
         }
 
         function clearCart() {
             cart = {};
+            totalAmount = 0;
+            totalItems = 0;
             updateCartDisplay();
         }
 
@@ -1542,6 +2081,9 @@
             document.getElementById('cashInserted').textContent = insertedCash;
             document.getElementById('cashPurchase').textContent = totalAmount;
             document.getElementById('cashTotalDisplay').textContent = totalAmount + ' 円';
+            // 支払い画面の購入額も更新
+            document.getElementById('cardPurchase').textContent = totalAmount;
+            document.getElementById('qrPurchase').textContent = totalAmount;
         }
 
         function completeCashPayment() {
@@ -1671,7 +2213,7 @@
             }, 3000);
         }
 
-        // ----- レシート／領収書 -----
+        // ----- レシート／領収書（税込表示対応） -----
         function generateReceipt() {
             const storeName = currentConfig?.storeName || 'レジごっこマート';
             const now = new Date();
@@ -1679,10 +2221,11 @@
             let itemsHtml = '';
             let total = 0;
             for (const code in cart) {
-                const item = cart[code];
-                total += item.price * item.quantity;
+                const item = cart[item];
+                const subtotal = item.taxIncludedPrice * item.quantity;
+                total += subtotal;
                 itemsHtml +=
-                    `<tr><td>${item.name}</td><td>${item.quantity}</td><td>${item.price}</td><td>${item.price * item.quantity}</td></tr>`;
+                    `<tr><td>${item.name}</td><td>${item.quantity}</td><td>${item.taxIncludedPrice}</td><td>${subtotal}</td></tr>`;
             }
             const paymentMethod = lastPaymentMethod || '現金';
             const inserted = lastInsertedAmount || total;
@@ -1698,6 +2241,7 @@
                     th { text-align: left; border-bottom: 1px solid #ddd; padding: 4px 0; }
                     td { padding: 4px 0; }
                     .total { font-weight: bold; font-size: 1.2rem; text-align: right; border-top: 2px solid #333; padding-top: 8px; margin-top: 8px; }
+                    .tax-info { font-size: 0.8rem; color: #64748b; text-align: right; }
                     .footer { text-align: center; font-size: 0.8rem; color: #64748b; margin-top: 16px; border-top: 1px dashed #ddd; padding-top: 8px; }
                 </style>
                 </head>
@@ -1707,11 +2251,12 @@
                     <div style="text-align:center;font-size:0.8rem;color:#64748b;">${dateStr}</div>
                     <div class="detail">
                         <table>
-                            <tr><th>商品名</th><th>数</th><th>単価</th><th>小計</th></tr>
+                            <tr><th>商品名</th><th>数</th><th>単価(税込)</th><th>小計</th></tr>
                             ${itemsHtml}
                         </table>
                     </div>
                     <div class="total">合計 ${total.toLocaleString()} 円</div>
+                    <div class="tax-info">(税込 ${taxRate}%)</div>
                     <div style="display:flex;justify-content:space-between;font-size:0.9rem;padding:4px 0;">
                         <span>決済方法</span><span>${paymentMethod}</span>
                     </div>
@@ -1743,6 +2288,7 @@
                     .body { margin: 16px 0; }
                     .row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px dotted #ddd; }
                     .total { font-weight: bold; font-size: 1.4rem; text-align: right; border-top: 2px solid #333; padding-top: 8px; margin-top: 8px; }
+                    .tax-info { font-size: 0.8rem; color: #64748b; text-align: right; }
                     .footer { text-align: center; font-size: 0.8rem; color: #64748b; margin-top: 16px; }
                 </style>
                 </head>
@@ -1757,6 +2303,7 @@
                         <div class="row"><span>決済方法</span><span>${lastPaymentMethod || '現金'}</span></div>
                     </div>
                     <div class="total">¥${total.toLocaleString()}</div>
+                    <div class="tax-info">(税込 ${taxRate}%)</div>
                     <div class="footer">上記正に領収いたしました</div>
                 </div>
                 </body>
@@ -1800,7 +2347,6 @@
             barcodeDecoded = false;
 
             showPage('page-scan');
-            // カメラ向きはenvironmentでリセット
             cameraFacingMode = 'environment';
             setTimeout(() => {
                 startBarcodeCamera();
@@ -1821,6 +2367,8 @@
             barcodeDecoded = false;
             lastPaymentMethod = '';
             lastInsertedAmount = 0;
+            // 支払い画面に合計を表示
+            document.getElementById('paymentTotal').textContent = totalAmount + ' 円';
             showPage('page-payment');
         });
 
@@ -1931,10 +2479,12 @@
         renderCardWallet();
         updateCartDisplay();
         updateCashDisplay();
+        loadTaxRate();
 
-        console.log('レジシミュレーター（カメラ切替機能付き）起動完了');
-        console.log('✅ 背面/前面カメラ切替ボタンを追加');
-        console.log('✅ バーコード・QRそれぞれに切替ボタン配置');
+        console.log('レジシミュレーター 完全版 起動完了');
+        console.log('✅ 税率設定機能');
+        console.log('✅ バーコード精度向上（fps向上・枠調整）');
+        console.log('✅ 設定編集機能（商品追加・削除・変更）');
     </script>
 
 </body>
